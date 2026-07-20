@@ -41,6 +41,22 @@ function wpc_register_changelog_blocks() {
             'className'    => [ 'type' => 'string', 'default' => '' ],
         ],
     ]);
+	
+	 if ( function_exists( 'register_block_style' ) ) {
+        // Standard-Stil
+        register_block_style( 'wpc/change-table', [
+            'name'         => 'default',
+            'label'        => __( 'Default', 'wp-changelog' ),
+            'is_default'   => true,
+        ] );
+
+        // Gestreifter Stil
+        register_block_style( 'wpc/change-table', [
+            'name'         => 'stripes',
+            'label'        => __( 'Stripes', 'wp-changelog' ),
+        ] );
+    }
+	
 }
 add_action( 'init', 'wpc_register_changelog_blocks' );
 
@@ -152,3 +168,4 @@ function wpc_render_change_table( $attributes, $content ) {
 
     return $output;
 }
+
