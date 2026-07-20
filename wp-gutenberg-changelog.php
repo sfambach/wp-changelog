@@ -4,11 +4,19 @@
  * Description: Fügt Änderungsnotizen hinzu und listet sie in einer flexiblen Tabelle auf.
  * Version: 1.1.0
  * Author: Ihr Name
+ * Text Domain: wp-changelog
+ * Domain Path: /languages
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
+
+// Textdomain laden für PHP-Übersetzungen
+function wpc_load_textdomain() {
+    load_plugin_textdomain( 'wp-changelog', false, dirname( plugin_basename( __FILE__ ) ) . '/languages' );
+}
+add_action( 'plugins_loaded', 'wpc_load_textdomain' );
 
 function wpc_register_changelog_blocks() {
     // 1. Änderungs-Eintrag
@@ -17,33 +25,36 @@ function wpc_register_changelog_blocks() {
         'attributes'      => [
             'date'    => [ 'type' => 'string', 'default' => '' ],
             'comment' => [ 'type' => 'string', 'default' => '' ],
-            'author'  => [ 'type' => 'string', 'default' => '' ], // Speichert den Autorennamen
+            'author'  => [ 'type' => 'string', 'default' => '' ],
         ],
     ]);
 
-    // 2. Tabellen-Block mit echten WP-Tabellen-Eigenschaften
+    // 2. Tabellen-Block
     register_block_type( 'wpc/change-table', [
         'editor_script'   => 'wpc-blocks-js',
         'render_callback' => 'wpc_render_change_table',
         'attributes'      => [
             'postId'       => [ 'type' => 'number', 'default' => 0 ],
-            'showAuthor'   => [ 'type' => 'boolean', 'default' => true ], // Schalter für Autor
-            'hasFixedLayout' => [ 'type' => 'boolean', 'default' => false ], // WP Standard
-            'align'        => [ 'type' => 'string', 'default' => '' ], // WP Ausrichtung
-            'className'    => [ 'type' => 'string', 'default' => '' ], // Für Styles wie is-style-stripes
+            'showAuthor'   => [ 'type' => 'boolean', 'default' => true ],
+            'hasFixedLayout' => [ 'type' => 'boolean', 'default' => false ],
+            'align'        => [ 'type' => 'string', 'default' => '' ],
+            'className'    => [ 'type' => 'string', 'default' => '' ],
         ],
     ]);
 }
 add_action( 'init', 'wpc_register_changelog_blocks' );
 
-// Skripte für den Editor laden
+// Skripte und deren Übersetzungen für den Editor laden
 function wpc_enqueue_block_editor_assets() {
     wp_enqueue_script(
         'wpc-blocks-js',
         plugins_url( 'blocks.js', __FILE__ ),
-        [ 'wp-blocks', 'wp-element', 'wp-editor', 'wp-components', 'wp-data', 'wp-block-editor' ],
+        [ 'wp-blocks', 'wp-element', 'wp-editor', 'wp-components', 'wp-data', 'wp-block-editor', 'wp-i18n' ], // 'wp-i18n' hinzugefügt!
         filemtime( plugin_dir_path( __FILE__ ) . 'blocks.js' )
     );
+
+    // Verknüpft die Übersetzungen mit dem JavaScript-Handle
+    wp_set_script_translations( 'wpc-blocks-js', 'wp-changelog', plugin_dir_path( __FILE__ ) . 'languages' );
 }
 add_action( 'enqueue_block_editor_assets', 'wpc_enqueue_block_editor_assets' );
 
@@ -52,15 +63,13 @@ add_action( 'enqueue_block_editor_assets', 'wpc_enqueue_block_editor_assets' );
 function wpc_render_change_table( $attributes, $content ) {
     $post_id = !empty($attributes['postId']) ? intval($attributes['postId']) : get_the_ID();
     if ( ! $post_id ) {
-        return '<p style="padding:10px; background:#fff3cd;">Speichere den Beitrag einmal als Entwurf, um die Historie zu laden.</p>';
+        return '<p style="padding:10px; background:#fff3cd;">' . esc_html__( 'Please save the post as a draft to load the history.', 'wp-changelog' ) . '</p>';
     }
 
     $post = get_post($post_id);
     if ( ! $post ) return '';
 
     $show_author = isset($attributes['showAuthor']) ? $attributes['showAuthor'] : true;
-
-    // 1. Daten sammeln
     $changelog_entries = [];
 
     // Erstellungseintrag sammeln
@@ -68,8 +77,8 @@ function wpc_render_change_table( $attributes, $content ) {
     $changelog_entries[] = [
         'timestamp' => (int)get_the_date( 'U', $post_id ),
         'date_str'  => get_the_date( 'd.m.Y', $post_id ),
-        'comment'   => '<strong>Beitrag erstellt</strong>',
-        'author'    => $author_obj ? $author_obj->display_name : 'System'
+        'comment'   => '<strong>' . esc_html__( 'Post created', 'wp-changelog' ) . '</strong>',
+        'author'    => $author_obj ? $author_obj->display_name : __( 'System', 'wp-changelog' )
     ];
 
     // Änderungs-Blöcke durchsuchen
@@ -78,7 +87,7 @@ function wpc_render_change_table( $attributes, $content ) {
         if ( $block['blockName'] === 'wpc/change-item' ) {
             $date_str = !empty($block['attrs']['date']) ? esc_html($block['attrs']['date']) : '';
             $comment  = !empty($block['attrs']['comment']) ? esc_html($block['attrs']['comment']) : '';
-            $author   = !empty($block['attrs']['author']) ? esc_html($block['attrs']['author']) : 'Unbekannt';
+            $author   = !empty($block['attrs']['author']) ? esc_html($block['attrs']['author']) : __( 'Unknown', 'wp-changelog' );
             
             if ( !empty($date_str) ) {
                 $timestamp = strtotime( str_replace('.', '-', $date_str) );
@@ -97,19 +106,15 @@ function wpc_render_change_table( $attributes, $content ) {
         }
     }
 
-    // 2. Absteigend sortieren
+    // Absteigend sortieren
     usort($changelog_entries, function($a, $b) {
         return $b['timestamp'] <=> $a['timestamp'];
     });
 
-    // 3. WP-Tabellen-Klassen dynamisch zusammenbauen
     $wrapper_classes = [ 'wp-block-table', 'wp-block-changelog-table' ];
-    
-    // Block-Ausrichtung (z.B. alignwide, alignfull) anhängen
     if ( ! empty( $attributes['align'] ) ) {
         $wrapper_classes[] = 'align' . $attributes['align'];
     }
-    // Zusätzliche Styles (z.B. Klassen vom Theme oder "is-style-stripes")
     if ( ! empty( $attributes['className'] ) ) {
         $wrapper_classes[] = $attributes['className'];
     }
@@ -122,17 +127,15 @@ function wpc_render_change_table( $attributes, $content ) {
     $wrapper_class_str = implode( ' ', array_map( 'sanitize_html_class', $wrapper_classes ) );
     $table_class_str   = implode( ' ', array_map( 'sanitize_html_class', $table_classes ) );
 
-    // 4. HTML-Struktur generieren
     $output = '<div class="' . $wrapper_class_str . '">';
     $output .= '<table class="' . $table_class_str . '">';
     
-    // Tabellenkopf anpassen je nach Autoren-Sichtbarkeit
     $output .= '<thead><tr>';
-    $output .= '<th>Datum</th>';
+    $output .= '<th>' . esc_html__( 'Date', 'wp-changelog' ) . '</th>';
     if ( $show_author ) {
-        $output .= '<th>Autor</th>';
+        $output .= '<th>' . esc_html__( 'Author', 'wp-changelog' ) . '</th>';
     }
-    $output .= '<th>Änderung</th>';
+    $output .= '<th>' . esc_html__( 'Change', 'wp-changelog' ) . '</th>';
     $output .= '</tr></thead>';
     
     $output .= '<tbody>';

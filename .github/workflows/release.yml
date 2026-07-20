@@ -1,0 +1,26 @@
+name: Build and Package Plugin
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create ZIP Deployment Package
+        run: |
+          mkdir wp-gutenberg-changelog
+          cp -r blocks.js wp-gutenberg-changelog.php README.md wp-gutenberg-changelog/
+          zip -r wp-gutenberg-changelog.zip wp-gutenberg-changelog
+
+      - name: Upload Release Asset
+        uses: softprops/action-gh-release@v1
+        with:
+          files: wp-gutenberg-changelog.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
