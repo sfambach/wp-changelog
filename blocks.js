@@ -2,17 +2,17 @@
     var el = element.createElement;
     var TextControl = components.TextControl;
     var ToggleControl = components.ToggleControl;
+    var SelectControl = components.SelectControl;
     var PanelBody = components.PanelBody;
 
     var InspectorControls = blockEditor.InspectorControls;
     var BlockControls = blockEditor.BlockControls;
     var BlockAlignmentControl = blockEditor.BlockAlignmentControl;
     
-    // Internationalisierung Shortcut
     var __ = i18n.__;
 
     /**
-     * BLOCK 1: Der Änderungs-Eintrag
+     * BLOCK 1: Der Änderungs-Eintrag (Radikal minimalistisch, grau, ohne Labels)
      */
     blocks.registerBlockType( 'wpc/change-item', {
         title: __( 'Change Note (Backend Only)', 'wp-changelog' ),
@@ -41,23 +41,49 @@
                 }
             }, [ currentUser ] );
 
-            return el( 'div', { style: { padding: '15px', border: '1px dashed #007cba', backgroundColor: '#f0f6fa', marginBottom: '10px' } },
-                el( 'p', { style: { margin: '0 0 8px 0', fontWeight: 'bold', color: '#007cba' } }, 
-                    '📝 ' + __( 'Internal change from:', 'wp-changelog' ) + ' ' + attributes.date + ' (' + __( 'Author:', 'wp-changelog' ) + ' ' + (attributes.author || __( 'Loading...', 'wp-changelog' )) + ')'
+            // Minimalistisches, graues Zeilenlayout ohne sichtbare Labels
+                        // Radikal flaches Zeilenlayout (Hälfte der vorherigen Höhe)
+            return el( 'div', { 
+                style: { 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '8px', 
+                    padding: '2px 6px', // Extrem reduziertes Padding
+                    backgroundColor: '#f5f5f5', 
+                    marginBottom: '4px',
+                    borderRadius: '2px',
+                    borderLeft: '3px solid #007cba' // Ein dezenter linker Streifen statt vollem Rahmen
+                } 
+            },
+                // 1. Feld: Datum
+                el( 'div', { style: { width: '90px' }, className: 'wpc-minimal-input' },
+                    el( TextControl, {
+                        value: attributes.date,
+                        onChange: function( value ) { setAttributes( { date: value } ); },
+                        placeholder: __( 'Date', 'wp-changelog' ),
+                        style: { height: '28px', fontSize: '12px' } // Flachere Input-Höhe
+                    } )
                 ),
-                el( TextControl, {
-                    label: __( 'What was changed?', 'wp-changelog' ),
-                    value: attributes.comment,
-                    onChange: function( value ) {
-                        setAttributes( { comment: value } );
-                    },
-                    placeholder: __( 'e.g. Fixed typo, replaced header image...', 'wp-changelog' )
-                } )
+                // 2. Feld: Beschreibung
+                el( 'div', { style: { flex: '1' }, className: 'wpc-minimal-input' },
+                    el( TextControl, {
+                        value: attributes.comment,
+                        onChange: function( value ) { setAttributes( { comment: value } ); },
+                        placeholder: __( 'What was changed? (e.g. Fixed typo...)', 'wp-changelog' ),
+                        style: { height: '28px', fontSize: '12px' }
+                    } )
+                ),
+                // 3. Feld: Autor (Ausgegraut)
+                el( 'div', { style: { width: '110px', opacity: '0.6' }, className: 'wpc-minimal-input' },
+                    el( TextControl, {
+                        value: attributes.author || __( 'Loading...', 'wp-changelog' ),
+                        disabled: true,
+                        style: { height: '28px', fontSize: '12px' }
+                    } )
+                )
             );
         },
-        save: function() {
-            return null;
-        }
+        save: function() { return null; }
     } );
 
     /**
@@ -73,56 +99,60 @@
             styles: true
         },
         attributes: {
-            postId: { type: 'number', default: 0 },
             showAuthor: { type: 'boolean', default: true },
             hasFixedLayout: { type: 'boolean', default: false },
+            consolidateDates: { type: 'boolean', default: false }, // Neue Option: Konsolidieren
+            sortOrder: { type: 'string', default: 'desc' },         // Neue Option: Sortierung (desc/asc)
             align: { type: 'string', default: '' },
             className: { type: 'string', default: '' }
         },
         edit: function( props ) {
             var attributes = props.attributes;
             var setAttributes = props.setAttributes;
+
             var currentPostId = data.select( 'core/editor' ).getCurrentPostId();
 
-            element.useEffect( function() {
-                if ( currentPostId && attributes.postId !== currentPostId ) {
-                    setAttributes( { postId: currentPostId } );
-                }
-            }, [ currentPostId ] );
-
-            if ( ! currentPostId ) {
-                return el( 'div', { style: { padding: '15px', background: '#fff3cd', border: '1px solid #ffeeba' } },
-                    __( 'Please save the post as a draft to enable the live preview of the table.', 'wp-changelog' )
-                );
-            }
+            // VORSCHAU-FIX FÜR VORLAGEN: 
+            // Registriert jede Inhaltsänderung im gesamten Editor, um ServerSideRender zum Neuladen zu zwingen
+            var blocksContentHash = data.useSelect( function( select ) {
+                var editor = select( 'core/editor' );
+                return editor ? editor.getEditedPostContent() : '';
+            }, [] );
 
             return [
                 el( BlockControls, { key: 'controls' },
                     el( BlockAlignmentControl, {
                         value: attributes.align,
-                        onChange: function( nextAlign ) {
-                            setAttributes( { align: nextAlign } );
-                        }
+                        onChange: function( nextAlign ) { setAttributes( { align: nextAlign } ); }
                     } )
                 ),
                 
                 el( InspectorControls, { key: 'inspector' },
                     el( PanelBody, { title: __( 'Table Settings', 'wp-changelog' ), initialOpen: true },
                         el( ToggleControl, {
+                            label: __( 'Consolidate identical dates', 'wp-changelog' ),
+                            help: __( 'Merges entries with the same date into a list within one row.', 'wp-changelog' ),
+                            checked: attributes.consolidateDates,
+                            onChange: function( value ) { setAttributes( { consolidateDates: value } ); }
+                        } ),
+                        el( SelectControl, {
+                            label: __( 'Sort Order', 'wp-changelog' ),
+                            value: attributes.sortOrder,
+                            options: [
+                                { label: __( 'Newest first (Descending)', 'wp-changelog' ), value: 'desc' },
+                                { label: __( 'Oldest first (Ascending)', 'wp-changelog' ), value: 'asc' }
+                            ],
+                            onChange: function( value ) { setAttributes( { sortOrder: value } ); }
+                        } ),
+                        el( ToggleControl, {
                             label: __( 'Show Author', 'wp-changelog' ),
-                            help: __( 'Displays the name of the author who logged the change.', 'wp-changelog' ),
                             checked: attributes.showAuthor,
-                            onChange: function( value ) {
-                                setAttributes( { showAuthor: value } );
-                            }
+                            onChange: function( value ) { setAttributes( { showAuthor: value } ); }
                         } ),
                         el( ToggleControl, {
                             label: __( 'Fixed width table cells', 'wp-changelog' ),
-                            help: __( 'Defines fixed column widths instead of variable widths.', 'wp-changelog' ),
                             checked: attributes.hasFixedLayout,
-                            onChange: function( value ) {
-                                setAttributes( { hasFixedLayout: value } );
-                            }
+                            onChange: function( value ) { setAttributes( { hasFixedLayout: value } ); }
                         } )
                     )
                 ),
@@ -131,14 +161,14 @@
                     el( 'span', { style: { display: 'block', fontSize: '11px', color: '#999', marginBottom: '5px', textTransform: 'uppercase' } }, __( 'Table Live Preview:', 'wp-changelog' ) ),
                     el( wp.serverSideRender, {
                         block: 'wpc/change-table',
-                        attributes: attributes
+                        attributes: attributes,
+                        // Der blocksContentHash zwingt die Komponente bei jedem Tastendruck/Inhaltswechsel zum Render-Update
+                        urlQueryArgs: { post_id: currentPostId, trigger: blocksContentHash ? blocksContentHash.length : 0 }
                     } )
                 )
             ];
         },
-        save: function() {
-            return null;
-        }
+        save: function() { return null; }
     } );
 
-} )( window.wp.blocks, window.wp.element, window.wp.blockEditor, window.wp.components, window.wp.data, window.wp.i18n ); // window.wp.i18n übergeben!
+} )( window.wp.blocks, window.wp.element, window.wp.blockEditor, window.wp.components, window.wp.data, window.wp.i18n );
