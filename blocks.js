@@ -162,8 +162,10 @@
                     el( wp.serverSideRender, {
                         block: 'wpc/change-table',
                         attributes: attributes,
-                        // Der blocksContentHash zwingt die Komponente bei jedem Tastendruck/Inhaltswechsel zum Render-Update
-                        urlQueryArgs: { post_id: currentPostId, trigger: blocksContentHash ? blocksContentHash.length : 0 }
+                        urlQueryArgs: { 
+                            post_id: currentPostId || 0, // Fallback auf 0, wenn wir uns in einer Vorlage befinden
+                            trigger: blocksContentHash ? blocksContentHash.length : 0 
+                        }
                     } )
                 )
             ];
