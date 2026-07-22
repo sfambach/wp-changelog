@@ -13,14 +13,11 @@ jobs:
 
       - name: Create ZIP Deployment Package
         run: |
-          mkdir wp-gutenberg-changelog
-          cp -r blocks.js wp-gutenberg-changelog.php README.md wp-gutenberg-changelog/
-          zip -r wp-gutenberg-changelog.zip wp-gutenberg-changelog
+          git archive --format=zip --prefix=wp-changelog/ HEAD -o wp-changelog.zip
 
       - name: Upload Release Asset
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
-          files: wp-gutenberg-changelog.zip
+          files: wp-changelog.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-

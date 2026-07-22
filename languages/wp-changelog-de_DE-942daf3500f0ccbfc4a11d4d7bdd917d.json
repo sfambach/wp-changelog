@@ -1,0 +1,16 @@
+{
+    "domain": "wp-changelog",
+    "locale_data": {
+        "wp-changelog": {
+            "": {
+                "domain": "wp-changelog",
+                "lang": "de_DE",
+                "plural_forms": "nplurals=2; plural=(n != 1);"
+            },
+            "Global Change Log (automatic)": [ "Globales Änderungsprotokoll (automatisch)" ],
+            "Configured under Settings → Change Log. A manual Change Log block on this page takes precedence.": [ "Konfiguriert unter Einstellungen → Änderungsprotokoll. Ein manueller Änderungsprotokoll-Block auf dieser Seite hat Vorrang." ],
+            "Hidden on the public site — editor preview only.": [ "Auf der öffentlichen Website ausgeblendet — nur Editor-Vorschau." ],
+            "Loading...": [ "Lade..." ]
+        }
+    }
+}

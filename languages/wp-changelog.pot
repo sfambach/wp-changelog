@@ -1,0 +1,261 @@
+# Copyright (C) 2026 Stefan Fambach
+# This file is distributed under the GPLv2 or later.
+msgid ""
+msgstr ""
+"Project-Id-Version: Gutenberg Changelog & Version History 1.9.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-22 15:00+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Domain: wp-changelog\n"
+
+msgid "Default"
+msgstr ""
+
+msgid "Stripes"
+msgstr ""
+
+msgid "Please save the post as a draft to load the history."
+msgstr ""
+
+msgid "Post created"
+msgstr ""
+
+msgid "System"
+msgstr ""
+
+msgid "Example: Replaced header image and updated text layout."
+msgstr ""
+
+msgid "John Doe"
+msgstr ""
+
+msgid "Unknown"
+msgstr ""
+
+msgid "Date"
+msgstr ""
+
+msgid "Change"
+msgstr ""
+
+msgid "Author"
+msgstr ""
+
+msgid "Single Change Note"
+msgstr ""
+
+msgid "Multi Change Note"
+msgstr ""
+
+msgid "Add row"
+msgstr ""
+
+msgid "Remove row"
+msgstr ""
+
+msgid "What was changed? (e.g. Fixed typo...)"
+msgstr ""
+
+msgid "Loading..."
+msgstr ""
+
+msgid "Change Log"
+msgstr ""
+
+msgid "Change Log Settings"
+msgstr ""
+
+msgid "Automatically append the Change Log table to supported content types. Manual Change Log blocks in the editor are unchanged and take precedence on individual pages."
+msgstr ""
+
+msgid "Global integration"
+msgstr ""
+
+msgid "Enable on all configured pages"
+msgstr ""
+
+msgid "Append the Change Log table automatically"
+msgstr ""
+
+msgid "When enabled, the table is added to the end of the content on the selected post types unless a Change Log block is already present."
+msgstr ""
+
+msgid "Post types"
+msgstr ""
+
+msgid "Choose which public content types should receive the global Change Log."
+msgstr ""
+
+msgid "Table display"
+msgstr ""
+
+msgid "These options mirror the Change Log block sidebar settings."
+msgstr ""
+
+msgid "General Settings"
+msgstr ""
+
+msgid "Changefield Options"
+msgstr ""
+
+msgid "Change field options"
+msgstr ""
+
+msgid "Table Settings"
+msgstr ""
+
+msgid "Consolidate identical dates"
+msgstr ""
+
+msgid "Merges entries with the same date and author into one row."
+msgstr ""
+
+msgid "Merge entries with the same date and author into one row"
+msgstr ""
+
+msgid "List for changes"
+msgstr ""
+
+msgid "Always display changes as a bullet list in the Change column."
+msgstr ""
+
+msgid "Always display changes as a bullet list in the Change column"
+msgstr ""
+
+msgid "Order merged changes by"
+msgstr ""
+
+msgid "Time of change"
+msgstr ""
+
+msgid "Alphabetically"
+msgstr ""
+
+msgid "Merged changes sort order"
+msgstr ""
+
+msgid "Controls the order of multiple changes within one table cell."
+msgstr ""
+
+msgid "Sort Order"
+msgstr ""
+
+msgid "Which date row appears at the top of the table."
+msgstr ""
+
+msgid "Newest on top"
+msgstr ""
+
+msgid "Oldest on top"
+msgstr ""
+
+msgid "Newest first (Descending)"
+msgstr ""
+
+msgid "Oldest first (Ascending)"
+msgstr ""
+
+msgid "Visible on page"
+msgstr ""
+
+msgid "When off, the table is shown in the editor only and hidden on the public site."
+msgstr ""
+
+msgid "Show on the public site"
+msgstr ""
+
+msgid "When off, the global table is hidden on the public site. It is still available in wp-admin previews."
+msgstr ""
+
+msgid "Hidden on the public site — editor preview only."
+msgstr ""
+
+msgid "Show Author"
+msgstr ""
+
+msgid "Display the Author column"
+msgstr ""
+
+msgid "Fixed width table cells"
+msgstr ""
+
+msgid "Use fixed table layout"
+msgstr ""
+
+msgid "Table alignment"
+msgstr ""
+
+msgid "Table style"
+msgstr ""
+
+msgid "Left"
+msgstr ""
+
+msgid "Center"
+msgstr ""
+
+msgid "Right"
+msgstr ""
+
+msgid "Wide"
+msgstr ""
+
+msgid "Full width"
+msgstr ""
+
+msgid "Additional CSS class"
+msgstr ""
+
+msgid "Table Live Preview:"
+msgstr ""
+
+msgid "Revision Multiline Note"
+msgstr ""
+
+msgid "Revision Settings"
+msgstr ""
+
+msgid "Order by"
+msgstr ""
+
+msgid "Sort direction"
+msgstr ""
+
+msgid "Include current revision"
+msgstr ""
+
+msgid "Syncing revision dates…"
+msgstr ""
+
+msgid "Please save the post as a draft to load the revisions."
+msgstr ""
+
+msgid "No post revisions found yet. Save the post to create revisions."
+msgstr ""
+
+msgid "Generated from WordPress post revisions:"
+msgstr ""
+
+msgid "Current revision"
+msgstr ""
+
+msgid "Revision saved"
+msgstr ""
+
+msgid "Initial version"
+msgstr ""
+
+msgid "You cannot edit this post."
+msgstr ""
+
+msgid "Global Change Log (automatic)"
+msgstr ""
+
+msgid "Configured under Settings → Change Log. A manual Change Log block on this page takes precedence."
+msgstr ""

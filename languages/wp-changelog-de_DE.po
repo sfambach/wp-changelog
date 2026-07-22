@@ -1,0 +1,262 @@
+# Copyright (C) 2026 Stefan Fambach
+# This file is distributed under the GPLv2 or later.
+msgid ""
+msgstr ""
+"Project-Id-Version: Gutenberg Changelog & Version History 1.9.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-22 15:00+0000\n"
+"PO-Revision-Date: 2026-07-22 15:00+0000\n"
+"Last-Translator: Stefan Fambach\n"
+"Language-Team: German\n"
+"Language: de_DE\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Domain: wp-changelog\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Default"
+msgstr "Standard"
+
+msgid "Stripes"
+msgstr "Streifen"
+
+msgid "Please save the post as a draft to load the history."
+msgstr "Bitte speichern Sie den Beitrag als Entwurf, um die Historie zu laden."
+
+msgid "Post created"
+msgstr "Beitrag erstellt"
+
+msgid "System"
+msgstr "System"
+
+msgid "Example: Replaced header image and updated text layout."
+msgstr "Beispiel: Kopfbild ausgetauscht und Textlayout aktualisiert."
+
+msgid "John Doe"
+msgstr "John Doe"
+
+msgid "Unknown"
+msgstr "Unbekannt"
+
+msgid "Date"
+msgstr "Datum"
+
+msgid "Change"
+msgstr "Änderung"
+
+msgid "Author"
+msgstr "Autor"
+
+msgid "Single Change Note"
+msgstr "Einzelne Änderungsnotiz"
+
+msgid "Multi Change Note"
+msgstr "Mehrfach-Änderungsnotiz"
+
+msgid "Add row"
+msgstr "Zeile hinzufügen"
+
+msgid "Remove row"
+msgstr "Zeile entfernen"
+
+msgid "What was changed? (e.g. Fixed typo...)"
+msgstr "Was wurde geändert? (z.B. Tippfehler korrigiert...)"
+
+msgid "Loading..."
+msgstr "Lade..."
+
+msgid "Change Log"
+msgstr "Änderungsprotokoll"
+
+msgid "Change Log Settings"
+msgstr "Änderungsprotokoll-Einstellungen"
+
+msgid "Automatically append the Change Log table to supported content types. Manual Change Log blocks in the editor are unchanged and take precedence on individual pages."
+msgstr "Hängt die Änderungsprotokoll-Tabelle automatisch an unterstützte Inhaltstypen an. Manuelle Änderungsprotokoll-Blöcke im Editor bleiben unverändert und haben auf einzelnen Seiten Vorrang."
+
+msgid "Global integration"
+msgstr "Globale Integration"
+
+msgid "Enable on all configured pages"
+msgstr "Auf allen konfigurierten Seiten aktivieren"
+
+msgid "Append the Change Log table automatically"
+msgstr "Änderungsprotokoll-Tabelle automatisch anhängen"
+
+msgid "When enabled, the table is added to the end of the content on the selected post types unless a Change Log block is already present."
+msgstr "Wenn aktiviert, wird die Tabelle am Ende des Inhalts der ausgewählten Beitragstypen eingefügt, sofern kein Änderungsprotokoll-Block vorhanden ist."
+
+msgid "Post types"
+msgstr "Beitragstypen"
+
+msgid "Choose which public content types should receive the global Change Log."
+msgstr "Wählen Sie, welche öffentlichen Inhaltstypen das globale Änderungsprotokoll erhalten sollen."
+
+msgid "Table display"
+msgstr "Tabellenanzeige"
+
+msgid "These options mirror the Change Log block sidebar settings."
+msgstr "Diese Optionen entsprechen den Einstellungen der Seitenleiste des Änderungsprotokoll-Blocks."
+
+msgid "General Settings"
+msgstr "Allgemeine Einstellungen"
+
+msgid "Changefield Options"
+msgstr "Changefield-Optionen"
+
+msgid "Change field options"
+msgstr "Änderungsfeld-Optionen"
+
+msgid "Table Settings"
+msgstr "Tabelleneinstellungen"
+
+msgid "Consolidate identical dates"
+msgstr "Gleiche Daten zusammenfassen"
+
+msgid "Merges entries with the same date and author into one row."
+msgstr "Fasst Einträge mit gleichem Datum und gleichem Autor in einer Zeile zusammen."
+
+msgid "Merge entries with the same date and author into one row"
+msgstr "Einträge mit gleichem Datum und Autor in einer Zeile zusammenfassen"
+
+msgid "List for changes"
+msgstr "Liste für Änderungen"
+
+msgid "Always display changes as a bullet list in the Change column."
+msgstr "Änderungen in der Spalte „Änderung“ immer als Aufzählung anzeigen."
+
+msgid "Always display changes as a bullet list in the Change column"
+msgstr "Änderungen in der Spalte „Änderung“ immer als Aufzählung anzeigen"
+
+msgid "Order merged changes by"
+msgstr "Zusammengefasste Änderungen sortieren nach"
+
+msgid "Time of change"
+msgstr "Zeitpunkt der Änderung"
+
+msgid "Alphabetically"
+msgstr "Alphabetisch"
+
+msgid "Merged changes sort order"
+msgstr "Sortierreihenfolge der zusammengefassten Änderungen"
+
+msgid "Controls the order of multiple changes within one table cell."
+msgstr "Steuert die Reihenfolge mehrerer Änderungen innerhalb einer Tabellenzelle."
+
+msgid "Sort Order"
+msgstr "Sortierreihenfolge"
+
+msgid "Which date row appears at the top of the table."
+msgstr "Welche Datumszeile oben in der Tabelle erscheint."
+
+msgid "Newest on top"
+msgstr "Neueste oben"
+
+msgid "Oldest on top"
+msgstr "Älteste oben"
+
+msgid "Newest first (Descending)"
+msgstr "Neueste zuerst (Absteigend)"
+
+msgid "Oldest first (Ascending)"
+msgstr "Älteste zuerst (Aufsteigend)"
+
+msgid "Visible on page"
+msgstr "Auf der Seite sichtbar"
+
+msgid "When off, the table is shown in the editor only and hidden on the public site."
+msgstr "Wenn deaktiviert, wird die Tabelle nur im Editor angezeigt und auf der öffentlichen Website ausgeblendet."
+
+msgid "Show on the public site"
+msgstr "Auf der öffentlichen Website anzeigen"
+
+msgid "When off, the global table is hidden on the public site. It is still available in wp-admin previews."
+msgstr "Wenn deaktiviert, wird die globale Tabelle auf der öffentlichen Website ausgeblendet. Sie ist weiterhin in wp-admin-Vorschauen verfügbar."
+
+msgid "Hidden on the public site — editor preview only."
+msgstr "Auf der öffentlichen Website ausgeblendet — nur Editor-Vorschau."
+
+msgid "Show Author"
+msgstr "Autor anzeigen"
+
+msgid "Display the Author column"
+msgstr "Autor-Spalte anzeigen"
+
+msgid "Fixed width table cells"
+msgstr "Zellen mit fester Breite"
+
+msgid "Use fixed table layout"
+msgstr "Festes Tabellenlayout verwenden"
+
+msgid "Table alignment"
+msgstr "Tabellenausrichtung"
+
+msgid "Table style"
+msgstr "Tabellenstil"
+
+msgid "Left"
+msgstr "Links"
+
+msgid "Center"
+msgstr "Zentriert"
+
+msgid "Right"
+msgstr "Rechts"
+
+msgid "Wide"
+msgstr "Breit"
+
+msgid "Full width"
+msgstr "Volle Breite"
+
+msgid "Additional CSS class"
+msgstr "Zusätzliche CSS-Klasse"
+
+msgid "Table Live Preview:"
+msgstr "Live-Vorschau der Tabelle:"
+
+msgid "Revision Multiline Note"
+msgstr "Revisions-Mehrzeilen-Notiz"
+
+msgid "Revision Settings"
+msgstr "Revisionseinstellungen"
+
+msgid "Order by"
+msgstr "Sortieren nach"
+
+msgid "Sort direction"
+msgstr "Sortierrichtung"
+
+msgid "Include current revision"
+msgstr "Aktuelle Revision einschließen"
+
+msgid "Syncing revision dates…"
+msgstr "Revisionsdaten werden synchronisiert…"
+
+msgid "Please save the post as a draft to load the revisions."
+msgstr "Bitte speichern Sie den Beitrag als Entwurf, um die Revisionen zu laden."
+
+msgid "No post revisions found yet. Save the post to create revisions."
+msgstr "Noch keine Beitrags-Revisionen vorhanden. Speichern Sie den Beitrag, um Revisionen zu erstellen."
+
+msgid "Generated from WordPress post revisions:"
+msgstr "Generiert aus WordPress-Beitragsrevisionen:"
+
+msgid "Current revision"
+msgstr "Aktuelle Revision"
+
+msgid "Revision saved"
+msgstr "Revision gespeichert"
+
+msgid "Initial version"
+msgstr "Erstversion"
+
+msgid "You cannot edit this post."
+msgstr "Sie können diesen Beitrag nicht bearbeiten."
+
+msgid "Global Change Log (automatic)"
+msgstr "Globales Änderungsprotokoll (automatisch)"
+
+msgid "Configured under Settings → Change Log. A manual Change Log block on this page takes precedence."
+msgstr "Konfiguriert unter Einstellungen → Änderungsprotokoll. Ein manueller Änderungsprotokoll-Block auf dieser Seite hat Vorrang."

@@ -1,0 +1,28 @@
+{
+    "domain": "wp-changelog",
+    "locale_data": {
+        "wp-changelog": {
+            "": {
+                "domain": "wp-changelog",
+                "lang": "de_DE",
+                "plural_forms": "nplurals=2; plural=(n != 1);"
+            },
+            "Revision Multiline Note": [ "Revisions-Mehrzeilen-Notiz" ],
+            "Table Settings": [ "Tabelleneinstellungen" ],
+            "Order by": [ "Sortieren nach" ],
+            "Sort direction": [ "Sortierrichtung" ],
+            "Date": [ "Datum" ],
+            "Change": [ "Änderung" ],
+            "Author": [ "Autor" ],
+            "Oldest on top": [ "Älteste oben" ],
+            "Newest on top": [ "Neueste oben" ],
+            "Show Author": [ "Autor anzeigen" ],
+            "Include current revision": [ "Aktuelle Revision einschließen" ],
+            "Please save the post as a draft to load the revisions.": [ "Bitte speichern Sie den Beitrag als Entwurf, um die Revisionen zu laden." ],
+            "Syncing revision dates…": [ "Revisionsdaten werden synchronisiert…" ],
+            "No post revisions found yet. Save the post to create revisions.": [ "Noch keine Beitrags-Revisionen vorhanden. Speichern Sie den Beitrag, um Revisionen zu erstellen." ],
+            "What was changed? (e.g. Fixed typo...)": [ "Was wurde geändert? (z.B. Tippfehler korrigiert...)" ],
+            "Loading...": [ "Lade..." ]
+        }
+    }
+}

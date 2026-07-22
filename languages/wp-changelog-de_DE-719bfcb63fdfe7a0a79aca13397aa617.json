@@ -1,0 +1,43 @@
+{
+    "domain": "wp-changelog",
+    "locale_data": {
+        "wp-changelog": {
+            "": {
+                "domain": "wp-changelog",
+                "lang": "de_DE",
+                "plural_forms": "nplurals=2; plural=(n != 1);"
+            },
+            "Change Log": [ "Änderungsprotokoll" ],
+            "General Settings": [ "Allgemeine Einstellungen" ],
+            "Sort Order": [ "Sortierreihenfolge" ],
+            "Which date row appears at the top of the table.": [ "Welche Datumszeile oben in der Tabelle erscheint." ],
+            "Newest on top": [ "Neueste oben" ],
+            "Oldest on top": [ "Älteste oben" ],
+            "Visible on page": [ "Auf der Seite sichtbar" ],
+            "When off, the table is shown in the editor only and hidden on the public site.": [ "Wenn deaktiviert, wird die Tabelle nur im Editor angezeigt und auf der öffentlichen Website ausgeblendet." ],
+            "Show Author": [ "Autor anzeigen" ],
+            "Fixed width table cells": [ "Zellen mit fester Breite" ],
+            "Table style": [ "Tabellenstil" ],
+            "Default": [ "Standard" ],
+            "Stripes": [ "Streifen" ],
+            "Changefield Options": [ "Changefield-Optionen" ],
+            "Consolidate identical dates": [ "Gleiche Daten zusammenfassen" ],
+            "Merges entries with the same date and author into one row.": [ "Fasst Einträge mit gleichem Datum und gleichem Autor in einer Zeile zusammen." ],
+            "List for changes": [ "Liste für Änderungen" ],
+            "Always display changes as a bullet list in the Change column.": [ "Änderungen in der Spalte „Änderung“ immer als Aufzählung anzeigen." ],
+            "Order merged changes by": [ "Zusammengefasste Änderungen sortieren nach" ],
+            "Time of change": [ "Zeitpunkt der Änderung" ],
+            "Alphabetically": [ "Alphabetisch" ],
+            "Merged changes sort order": [ "Sortierreihenfolge der zusammengefassten Änderungen" ],
+            "Controls the order of multiple changes within one table cell.": [ "Steuert die Reihenfolge mehrerer Änderungen innerhalb einer Tabellenzelle." ],
+            "Table Live Preview:": [ "Live-Vorschau der Tabelle:" ],
+            "Hidden on the public site — editor preview only.": [ "Auf der öffentlichen Website ausgeblendet — nur Editor-Vorschau." ],
+            "Date": [ "Datum" ],
+            "Change": [ "Änderung" ],
+            "Author": [ "Autor" ],
+            "Post created": [ "Beitrag erstellt" ],
+            "Example: Replaced header image and updated text layout.": [ "Beispiel: Kopfbild ausgetauscht und Textlayout aktualisiert." ],
+            "John Doe": [ "John Doe" ]
+        }
+    }
+}

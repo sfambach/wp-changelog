@@ -1,0 +1,20 @@
+{
+    "domain": "wp-changelog",
+    "locale_data": {
+        "wp-changelog": {
+            "": {
+                "domain": "wp-changelog",
+                "lang": "de_DE",
+                "plural_forms": "nplurals=2; plural=(n != 1);"
+            },
+            "Multi Change Note": [ "Mehrfach-Änderungsnotiz" ],
+            "Add row": [ "Zeile hinzufügen" ],
+            "Remove row": [ "Zeile entfernen" ],
+            "Date": [ "Datum" ],
+            "Change": [ "Änderung" ],
+            "Author": [ "Autor" ],
+            "What was changed? (e.g. Fixed typo...)": [ "Was wurde geändert? (z.B. Tippfehler korrigiert...)" ],
+            "Loading...": [ "Lade..." ]
+        }
+    }
+}
