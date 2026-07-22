@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Gutenberg Changelog & Version History
  * Description: Adds change notes and lists them in a flexible, interactive table.
- * Version: 1.0.0
+ * Version: 1.6.0
  * Author: Stefan Fambach
  * Text Domain: wp-changelog
  * Domain Path: /languages
