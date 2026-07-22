@@ -4,6 +4,7 @@
  * Description: Adds change notes and lists them in a flexible, interactive table.
  * Version: 1.6.0
  * Author: Stefan Fambach
+ * Author URI: https://www.fambach.net
  * Text Domain: wp-changelog
  * Domain Path: /languages
  *

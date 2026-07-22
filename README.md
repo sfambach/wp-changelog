@@ -3,6 +3,7 @@
 A lightweight WordPress plugin for logging content changes inside the Gutenberg editor and rendering a formatted changelog table on the frontend.
 
 **Author:** Stefan Fambach  
+**Website:** [www.fambach.net](https://www.fambach.net) — further information  
 **Version:** 1.6.0  
 **Requires:** WordPress 6.0+, PHP 7.4+
 
