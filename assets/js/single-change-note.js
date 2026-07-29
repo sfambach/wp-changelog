@@ -13,7 +13,7 @@
         i18n,
         'wpc/single-change-note',
         {
-            title: __( 'Single Change Note', 'wp-changelog' ),
+            title: __( 'Einzel-Log-Eintrag', 'wp-changelog' ),
             icon: 'edit'
         }
     );
@@ -26,7 +26,7 @@
         i18n,
         'wpc/change-item',
         {
-            title: __( 'Single Change Note', 'wp-changelog' ),
+            title: __( 'Einzel-Log-Eintrag', 'wp-changelog' ),
             icon: 'edit',
             supports: { inserter: false }
         }

@@ -125,34 +125,12 @@
         return el(
             'div',
             {
-                className: 'wpc-change-log-preview wpc-global-change-log-preview',
+                className: 'wpc-change-log-preview wpc-global-change-log-preview wpc-block-surface-wrap',
                 'data-wpc-global-change-log': 'true'
             },
-            el(
-                'span',
-                {
-                    style: {
-                        display: 'block',
-                        fontSize: '11px',
-                        color: '#999',
-                        marginBottom: '5px',
-                        textTransform: 'uppercase'
-                    }
-                },
-                __( 'Global Change Log (automatic)', 'wp-changelog' )
-            ),
-            el(
-                'span',
-                {
-                    style: {
-                        display: 'block',
-                        fontSize: '11px',
-                        color: '#666',
-                        marginBottom: '8px'
-                    }
-                },
-                __( 'Configured under Settings → Change Log. A manual Change Log block on this page takes precedence.', 'wp-changelog' )
-            ),
+            window.wpcChangelog && window.wpcChangelog.renderEditorBlockLabel
+                ? window.wpcChangelog.renderEditorBlockLabel( el, __( 'Logausgabe', 'wp-changelog' ) + ' (' + __( 'Global', 'wp-changelog' ) + ')' )
+                : null,
             preview.hiddenOnFrontend && el(
                 'span',
                 {

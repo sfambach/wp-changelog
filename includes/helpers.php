@@ -18,15 +18,6 @@ define( 'WPC_BLOCK_MULTI_CHANGE_NOTE', 'wpc/multi-change-note' );
 /** @var string Current Change Log block name. */
 define( 'WPC_BLOCK_CHANGE_LOG', 'wpc/change-log' );
 
-/** @var string Revision Multiline Note block name (revision-synced editable rows). */
-define( 'WPC_BLOCK_REVISION_MULTILINE_NOTE', 'wpc/revision-multiline-note' );
-
-/** @var string Legacy Version Multiline Note block name (hidden from inserter). */
-define( 'WPC_LEGACY_BLOCK_VERSION_MULTILINE_NOTE', 'wpc/version-multiline-note' );
-
-/** @var string Legacy Generated Multiline Note block name (hidden from inserter). */
-define( 'WPC_LEGACY_BLOCK_GENERATED_MULTILINE_NOTE', 'wpc/generated-multiline-note' );
-
 /** @var string Legacy Single Change Note block name (hidden from inserter). */
 define( 'WPC_LEGACY_BLOCK_SINGLE_CHANGE_NOTE', 'wpc/change-item' );
 
@@ -53,7 +44,23 @@ function wpc_plugin_path( $relative = '' ) {
  * @return string
  */
 function wpc_plugin_url( $relative = '' ) {
-    return plugins_url( ltrim( $relative, '/' ), dirname( __DIR__ ) . '/wp-changelog.php' );
+	// Use plugin slug path so Windows junctions/symlinks do not break plugins_url().
+	return plugins_url( ltrim( (string) $relative, '/' ), 'wp-changelog/wp-changelog.php' );
+}
+
+/**
+ * Default Change Log table caption by site locale.
+ *
+ * @return string
+ */
+function wpc_get_default_table_caption() {
+	$locale = function_exists( 'determine_locale' ) ? determine_locale() : get_locale();
+
+	if ( 0 === strpos( $locale, 'de' ) ) {
+		return 'Logbuch';
+	}
+
+	return 'Changelog';
 }
 
 /**
@@ -64,8 +71,20 @@ function wpc_plugin_url( $relative = '' ) {
  * @return int Post ID, or 0 when unavailable.
  */
 function wpc_get_render_post_id() {
-    if ( defined( 'REST_REQUEST' ) && REST_REQUEST && ! empty( $_GET['post_id'] ) ) {
-        return intval( $_GET['post_id'] );
+    if ( defined( 'REST_REQUEST' ) && REST_REQUEST ) {
+        $post_id = 0;
+
+        if ( isset( $_REQUEST['post_id'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+            $post_id = absint( wp_unslash( $_REQUEST['post_id'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        }
+
+        if ( ! $post_id && isset( $_GET['post_id'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+            $post_id = absint( wp_unslash( $_GET['post_id'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        }
+
+        if ( $post_id ) {
+            return $post_id;
+        }
     }
 
     return get_the_ID() ?: 0;
@@ -83,6 +102,18 @@ function wpc_is_template_preview( $post, $post_id ) {
         || $post->post_type === 'wp_block'
         || $post->post_type === 'wp_template'
         || $post_id === 0;
+}
+
+/**
+ * All block names that share the Multi Change Note (Log-Liste) implementation.
+ *
+ * @return string[]
+ */
+function wpc_multi_change_note_block_names() {
+    return [
+        WPC_BLOCK_MULTI_CHANGE_NOTE,
+        WPC_LEGACY_BLOCK_MULTI_CHANGE_NOTE,
+    ];
 }
 
 /**
@@ -157,14 +188,15 @@ function wpc_get_wrapper_classes( array $attributes ) {
         $classes[] = 'align' . $attributes['align'];
     }
 
-    $table_style = ! empty( $attributes['tableStyle'] ) ? $attributes['tableStyle'] : 'default';
-
-    if ( $table_style === 'stripes' ) {
-        $classes[] = 'is-style-stripes';
-    }
-
     if ( ! empty( $attributes['className'] ) ) {
         $classes[] = $attributes['className'];
+    }
+
+    $has_stripes = ( ! empty( $attributes['tableStyle'] ) && 'stripes' === $attributes['tableStyle'] )
+        || ( ! empty( $attributes['className'] ) && false !== strpos( $attributes['className'], 'is-style-stripes' ) );
+
+    if ( $has_stripes && ! in_array( 'is-style-stripes', $classes, true ) ) {
+        $classes[] = 'is-style-stripes';
     }
 
     return implode( ' ', array_map( 'sanitize_html_class', $classes ) );
@@ -177,7 +209,20 @@ function wpc_get_wrapper_classes( array $attributes ) {
  * @return string Table class string.
  */
 function wpc_get_table_classes( array $attributes ) {
-    return ! empty( $attributes['hasFixedLayout'] ) ? 'has-fixed-layout' : '';
+    $classes = [];
+
+    if ( ! empty( $attributes['hasFixedLayout'] ) ) {
+        $classes[] = 'has-fixed-layout';
+    }
+
+    $has_stripes = ( ! empty( $attributes['tableStyle'] ) && 'stripes' === $attributes['tableStyle'] )
+        || ( ! empty( $attributes['className'] ) && false !== strpos( $attributes['className'], 'is-style-stripes' ) );
+
+    if ( $has_stripes ) {
+        $classes[] = 'is-style-stripes';
+    }
+
+    return implode( ' ', $classes );
 }
 
 /**
@@ -191,26 +236,11 @@ function wpc_get_entry_sort_timestamp( array $entry ) {
 }
 
 /**
- * Unix timestamp for when a post or revision version was saved.
+ * Earliest known version timestamp from page revisions (first version).
  *
- * @param WP_Post $version_post Post or revision object.
- * @return int
- */
-function wpc_get_post_version_timestamp( WP_Post $version_post ) {
-    $timestamp = strtotime( $version_post->post_modified );
-
-    if ( ! $timestamp ) {
-        $timestamp = strtotime( $version_post->post_date );
-    }
-
-    return $timestamp ? (int) $timestamp : 0;
-}
-
-/**
- * Earliest known save timestamp for a post (oldest revision, else post_date).
- *
- * Uses the first stored revision when available because post_date can reflect
- * a later publish or modified date rather than the initial save.
+ * Looks through stored revisions and takes the oldest revision date. The current
+ * post_date / post_modified are ignored when revisions exist, because those can
+ * reflect later publish or last-change edits.
  *
  * @param WP_Post $post Post object.
  * @return int
@@ -220,26 +250,57 @@ function wpc_get_post_earliest_version_timestamp( WP_Post $post ) {
         $post->ID,
         [
             'order'          => 'ASC',
-            'posts_per_page' => 1,
+            'orderby'        => 'date ID',
+            'posts_per_page' => 100,
             'check_enabled'  => false,
         ]
     );
 
-    if ( ! empty( $revisions ) ) {
-        $oldest = reset( $revisions );
+    $earliest = 0;
 
-        if ( $oldest instanceof WP_Post ) {
-            $timestamp = wpc_get_post_version_timestamp( $oldest );
+    if ( is_array( $revisions ) ) {
+        foreach ( $revisions as $revision ) {
+            if ( ! $revision instanceof WP_Post ) {
+                continue;
+            }
 
-            if ( $timestamp > 0 ) {
-                return $timestamp;
+            if ( function_exists( 'wp_is_post_autosave' ) && wp_is_post_autosave( $revision ) ) {
+                continue;
+            }
+
+            // Revision post_date is the version identity; do not use post_modified.
+            $timestamp = 0;
+            if ( ! empty( $revision->post_date_gmt ) && '0000-00-00 00:00:00' !== $revision->post_date_gmt ) {
+                $timestamp = strtotime( $revision->post_date_gmt . ' UTC' );
+            }
+            if ( ! $timestamp && ! empty( $revision->post_date ) ) {
+                $timestamp = strtotime( $revision->post_date );
+            }
+
+            if ( $timestamp > 0 && ( 0 === $earliest || $timestamp < $earliest ) ) {
+                $earliest = (int) $timestamp;
             }
         }
     }
 
-    $created = strtotime( $post->post_date );
+    // Always compare with the post's own publish date (may predate all revisions).
+    $post_ts = 0;
+    if ( ! empty( $post->post_date_gmt ) && '0000-00-00 00:00:00' !== $post->post_date_gmt ) {
+        $post_ts = (int) strtotime( $post->post_date_gmt . ' UTC' );
+    }
+    if ( ! $post_ts && ! empty( $post->post_date ) ) {
+        $post_ts = (int) strtotime( $post->post_date );
+    }
 
-    return $created ? (int) $created : time();
+    if ( $earliest > 0 && $post_ts > 0 ) {
+        return min( $earliest, $post_ts );
+    }
+
+    if ( $earliest > 0 ) {
+        return $earliest;
+    }
+
+    return $post_ts > 0 ? $post_ts : time();
 }
 
 /**
@@ -281,11 +342,13 @@ function wpc_note_row_attribute_schema() {
  */
 function wpc_multi_note_block_attributes() {
     return [
-        'rows' => [
+        'rows'      => [
             'type'    => 'array',
             'default' => [],
             'items'   => wpc_note_row_attribute_schema(),
         ],
+        'sortField' => [ 'type' => 'string', 'default' => 'date' ],
+        'sortOrder' => [ 'type' => 'string', 'default' => 'desc' ],
     ];
 }
 
@@ -325,41 +388,12 @@ function wpc_change_log_block_attributes() {
         'changeFieldOrder' => [ 'type' => 'string', 'default' => 'newest_first' ],
         'sortOrder'        => [ 'type' => 'string', 'default' => 'desc' ],
         'visibleOnPage'    => [ 'type' => 'boolean', 'default' => true ],
+        'showCaption'      => [ 'type' => 'boolean', 'default' => true ],
+        'caption'          => [ 'type' => 'string', 'default' => '' ],
+        'editorPreview'    => [ 'type' => 'boolean', 'default' => false ],
         'tableStyle'       => [ 'type' => 'string', 'default' => 'default' ],
         'align'            => [ 'type' => 'string', 'default' => '' ],
         'className'        => [ 'type' => 'string', 'default' => '' ],
-    ];
-}
-
-/**
- * Attribute schema for the Revision Multiline Note block.
- *
- * @return array Block attribute definitions.
- */
-function wpc_revision_multiline_note_block_attributes() {
-    return [
-        'rows'                  => [
-            'type'    => 'array',
-            'default' => [],
-            'items'   => wpc_note_row_attribute_schema(),
-        ],
-        'sortField'             => [ 'type' => 'string', 'default' => 'date' ],
-        'sortOrder'             => [ 'type' => 'string', 'default' => 'desc' ],
-        'showAuthor'            => [ 'type' => 'boolean', 'default' => true ],
-        'includeCurrentVersion' => [ 'type' => 'boolean', 'default' => true ],
-    ];
-}
-
-/**
- * All block names that share the Revision Multiline Note implementation.
- *
- * @return string[]
- */
-function wpc_revision_multiline_note_block_names() {
-    return [
-        WPC_BLOCK_REVISION_MULTILINE_NOTE,
-        WPC_LEGACY_BLOCK_VERSION_MULTILINE_NOTE,
-        WPC_LEGACY_BLOCK_GENERATED_MULTILINE_NOTE,
     ];
 }
 

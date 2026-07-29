@@ -1,10 +1,13 @@
 <?php
 /**
  * Plugin Name: Gutenberg Changelog & Version History
+ * Plugin URI:  https://github.com/sfambach/wp-changelog
  * Description: Adds change notes and lists them in a flexible, interactive table.
- * Version: 1.6.0
+ * Version: 1.6.1
  * Author: Stefan Fambach
  * Author URI: https://www.fambach.net
+ * Requires at least: 6.0
+ * Requires PHP: 7.4
  * Text Domain: wp-changelog
  * Domain Path: /languages
  *
@@ -18,7 +21,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 require_once __DIR__ . '/includes/helpers.php';
 require_once __DIR__ . '/includes/collectors.php';
 require_once __DIR__ . '/includes/render-change-log.php';
-require_once __DIR__ . '/includes/render-revision-multiline-note.php';
 require_once __DIR__ . '/includes/blocks.php';
 require_once __DIR__ . '/includes/settings.php';
 require_once __DIR__ . '/includes/global-change-log.php';

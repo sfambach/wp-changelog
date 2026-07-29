@@ -28,12 +28,17 @@ function wpc_change_log_table_background_css() {
 
     return '.wp-block-changelog-table{display:block;width:100%;max-width:100%;clear:both;margin:1.5em 0;overflow-x:auto;}'
         . '.wp-block-changelog-table table{width:100%;border-collapse:collapse;}'
+        . '.wp-block-changelog-table .wpc-changelog-col-date,'
+        . '.wp-block-changelog-table .wpc-changelog-col-author{white-space:nowrap;width:1%;vertical-align:top;}'
+        . '.wp-block-changelog-table .wpc-changelog-col-change{width:auto;vertical-align:top;word-wrap:break-word;overflow-wrap:anywhere;}'
         . '.wp-block-changelog-table table,'
         . '.wp-block-changelog-table .wpc-change-log-table,'
         . '.wp-block-changelog-table .wpc-change-log-table th,'
         . '.wp-block-changelog-table .wpc-change-log-table td{background-color:' . $sheet . ';}'
-        . '.wp-block-changelog-table.is-style-stripes tbody tr:nth-child(odd){background-color:rgba(0,0,0,0.03);}'
-        . '.wp-block-changelog-table.is-style-stripes tbody tr:nth-child(odd) td{background-color:rgba(0,0,0,0.03);}'
+        . '.wp-block-changelog-table.is-style-stripes tbody tr:nth-child(odd),'
+        . '.wp-block-changelog-table.is-style-stripes tbody tr:nth-child(odd) td,'
+        . '.wpc-change-log-table.is-style-stripes tbody tr:nth-child(odd),'
+        . '.wpc-change-log-table.is-style-stripes tbody tr:nth-child(odd) td{background-color:#f0f0f0;}'
         . '.wpc-change-log-global-wrap{display:block;width:100%;clear:both;}';
 }
 
@@ -49,8 +54,7 @@ function wpc_editor_styles() {
         .wpc-block-surface,
         .wpc-multi-note-wrap,
         .wpc-change-log-preview,
-        .wpc-global-change-log-preview,
-        .wpc-revision-multiline-note {
+        .wpc-global-change-log-preview {
             background: rgba(0, 124, 186, 0.12);
         }
         .wpc-change-log-preview .wp-block-changelog-table table,
@@ -60,29 +64,43 @@ function wpc_editor_styles() {
             background-color: ' . $sheet . ';
         }
         .wpc-change-log-preview .wp-block-changelog-table.is-style-stripes tbody tr:nth-child(odd),
-        .wpc-global-change-log-preview .wp-block-changelog-table.is-style-stripes tbody tr:nth-child(odd) {
-            background-color: rgba(0, 0, 0, 0.03);
-        }
+        .wpc-global-change-log-preview .wp-block-changelog-table.is-style-stripes tbody tr:nth-child(odd),
         .wpc-change-log-preview .wp-block-changelog-table.is-style-stripes tbody tr:nth-child(odd) td,
-        .wpc-global-change-log-preview .wp-block-changelog-table.is-style-stripes tbody tr:nth-child(odd) td {
-            background-color: rgba(0, 0, 0, 0.03);
+        .wpc-global-change-log-preview .wp-block-changelog-table.is-style-stripes tbody tr:nth-child(odd) td,
+        .wpc-change-log-preview .wpc-change-log-table.is-style-stripes tbody tr:nth-child(odd),
+        .wpc-global-change-log-preview .wpc-change-log-table.is-style-stripes tbody tr:nth-child(odd),
+        .wpc-change-log-preview .wpc-change-log-table.is-style-stripes tbody tr:nth-child(odd) td,
+        .wpc-global-change-log-preview .wpc-change-log-table.is-style-stripes tbody tr:nth-child(odd) td {
+            background-color: #f0f0f0;
         }
         .wpc-minimal-input .components-base-control__field { margin-bottom: 0 !important; }
-        .wpc-multi-note-table { width: 100%; border-collapse: collapse; margin-bottom: 8px; font-size: 12px; }
+        .wpc-multi-note-table { width: 100%; table-layout: fixed; border-collapse: collapse; margin-bottom: 8px; font-size: 12px; }
         .wpc-multi-note-table th { text-align: left; padding: 4px 6px; background: rgba(0, 124, 186, 0.18); font-weight: 600; }
         .wpc-multi-note-table td { padding: 4px 6px; vertical-align: middle; border-top: 1px solid rgba(0, 124, 186, 0.2); }
+        .wpc-multi-note-table .wpc-changelog-col-date { width: 7rem; white-space: nowrap; }
+        .wpc-multi-note-table .wpc-changelog-col-author { width: 9rem; white-space: nowrap; }
+        .wpc-multi-note-table .wpc-changelog-col-change { width: auto; }
+        .wpc-multi-note-table .wpc-changelog-col-actions { width: 4.5rem; text-align: center; white-space: nowrap; }
+        .wpc-multi-note-table .components-base-control,
+        .wpc-multi-note-table .components-text-control__input { width: 100%; min-width: 0; }
+        .wpc-block-surface { width: 100%; box-sizing: border-box; }
+        .wpc-block-surface .wpc-changelog-col-date { width: 7rem; flex: 0 0 7rem; }
+        .wpc-block-surface .wpc-changelog-col-author { width: 9rem; flex: 0 0 9rem; }
+        .wpc-block-surface .wpc-changelog-col-change { flex: 1 1 auto; min-width: 0; }
         .wpc-multi-note-wrap { padding: 8px; border-radius: 2px; border-left: 3px solid #007cba; margin-bottom: 8px; }
+        .wpc-multi-note-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
         .wpc-change-log-preview,
         .wpc-global-change-log-preview { border: 1px dashed rgba(0, 124, 186, 0.35); padding: 10px; border-radius: 2px; margin-top: 24px; }
+        .wpc-change-log-preview > .wp-block-table,
+        .wpc-change-log-preview > figure.wp-block-table { margin: 0; }
         .wpc-global-change-log-preview .wp-block-changelog-table table,
         .wpc-global-change-log-preview .wpc-change-log-table,
         .wpc-global-change-log-preview .wpc-change-log-table th,
         .wpc-global-change-log-preview .wpc-change-log-table td {
             background-color: ' . $sheet . ';
         }
-        .wpc-revision-multiline-note-notice { margin: 0; font-size: 12px; color: #666; }
-        .wpc-revision-multiline-note.wpc-multi-note-wrap { margin-bottom: 0; }
-        .wpc-revision-multiline-note .wpc-multi-note-table td { opacity: 1; }
+        .wpc-editor-block-label { display: block; font-size: 11px; font-weight: 600; color: #1e1e1e; margin-bottom: 6px; }
+        .wpc-block-surface-wrap { margin-bottom: 4px; }
     </style>';
 }
 add_action( 'admin_head', 'wpc_editor_styles' );
@@ -138,14 +156,6 @@ function wpc_register_editor_scripts() {
         wpc_plugin_url( 'assets/js/change-log.js' ),
         array_merge( [ 'wpc-shared' ], $base_deps, $ssr_deps ),
         filemtime( $asset_path . 'change-log.js' ),
-        true
-    );
-
-    wp_register_script(
-        'wpc-revision-multiline-note',
-        wpc_plugin_url( 'assets/js/revision-multiline-note.js' ),
-        array_merge( [ 'wpc-shared' ], $base_deps, [ 'wp-api-fetch' ] ),
-        filemtime( $asset_path . 'revision-multiline-note.js' ),
         true
     );
 
@@ -219,16 +229,6 @@ function wpc_register_changelog_blocks() {
     wpc_register_editor_block( WPC_BLOCK_CHANGE_LOG, $change_log_args );
     wpc_register_editor_block( WPC_LEGACY_BLOCK_CHANGE_LOG, $change_log_args );
 
-    $revision_multiline_note_args = [
-        'editor_script'   => 'wpc-revision-multiline-note',
-        'render_callback' => 'wpc_render_revision_multiline_note',
-        'attributes'      => wpc_revision_multiline_note_block_attributes(),
-    ];
-
-    wpc_register_editor_block( WPC_BLOCK_REVISION_MULTILINE_NOTE, $revision_multiline_note_args );
-    wpc_register_editor_block( WPC_LEGACY_BLOCK_VERSION_MULTILINE_NOTE, $revision_multiline_note_args );
-    wpc_register_editor_block( WPC_LEGACY_BLOCK_GENERATED_MULTILINE_NOTE, $revision_multiline_note_args );
-
     if ( function_exists( 'register_block_style' ) ) {
         foreach ( [ WPC_BLOCK_CHANGE_LOG, WPC_LEGACY_BLOCK_CHANGE_LOG ] as $block_name ) {
             register_block_style( $block_name, [ 'name' => 'default', 'label' => __( 'Default', 'wp-changelog' ), 'is_default' => true ] );
@@ -246,7 +246,7 @@ add_action( 'init', 'wpc_register_changelog_blocks' );
 function wpc_enqueue_block_editor_assets() {
     $languages = wpc_plugin_path( 'languages' );
 
-    foreach ( [ 'wpc-single-change-note', 'wpc-multi-change-note', 'wpc-change-log', 'wpc-revision-multiline-note' ] as $handle ) {
+    foreach ( [ 'wpc-single-change-note', 'wpc-multi-change-note', 'wpc-change-log' ] as $handle ) {
         if ( wp_script_is( $handle, 'registered' ) ) {
             wp_set_script_translations( $handle, 'wp-changelog', $languages );
         }
@@ -259,68 +259,3 @@ function wpc_enqueue_block_editor_assets() {
 }
 add_action( 'enqueue_block_editor_assets', 'wpc_enqueue_block_editor_assets' );
 
-/**
- * REST callback: merge revision dates with stored rows for the editor.
- *
- * @param WP_REST_Request $request REST request.
- * @return WP_REST_Response|WP_Error
- */
-function wpc_rest_sync_revision_rows( WP_REST_Request $request ) {
-    $post_id = (int) $request->get_param( 'post_id' );
-
-    if ( ! $post_id || ! current_user_can( 'edit_post', $post_id ) ) {
-        return new WP_Error( 'wpc_forbidden', __( 'You cannot edit this post.', 'wp-changelog' ), [ 'status' => 403 ] );
-    }
-
-    $attributes = [
-        'rows'                  => $request->get_param( 'rows' ),
-        'includeCurrentVersion' => $request->get_param( 'includeCurrentVersion' ),
-    ];
-
-    if ( ! is_array( $attributes['rows'] ) ) {
-        $attributes['rows'] = [];
-    }
-
-    if ( null === $attributes['includeCurrentVersion'] ) {
-        $attributes['includeCurrentVersion'] = true;
-    }
-
-    return rest_ensure_response(
-        wpc_sync_revision_note_rows_for_post( $post_id, $attributes )
-    );
-}
-
-/**
- * Register REST routes used by the block editor.
- *
- * @return void
- */
-function wpc_register_rest_routes() {
-    register_rest_route(
-        'wp-changelog/v1',
-        '/sync-revision-rows',
-        [
-            'methods'             => 'POST',
-            'callback'            => 'wpc_rest_sync_revision_rows',
-            'permission_callback' => function () {
-                return current_user_can( 'edit_posts' );
-            },
-            'args'                => [
-                'post_id'               => [
-                    'required'          => true,
-                    'type'              => 'integer',
-                    'sanitize_callback' => 'absint',
-                ],
-                'rows'                  => [
-                    'required' => false,
-                    'type'     => 'array',
-                ],
-                'includeCurrentVersion' => [
-                    'required' => false,
-                    'type'     => 'boolean',
-                ],
-            ],
-        ]
-    );
-}
-add_action( 'rest_api_init', 'wpc_register_rest_routes' );

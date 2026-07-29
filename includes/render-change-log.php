@@ -28,18 +28,14 @@ function wpc_sort_change_items( array $items, $sort_mode, $sort_order ) {
     usort(
         $items,
         function ( $a, $b ) use ( $sort_mode, $oldest_on_top ) {
+            $a_creation = ! empty( $a['is_creation'] );
+            $b_creation = ! empty( $b['is_creation'] );
+
+            if ( $a_creation !== $b_creation ) {
+                return $a_creation === $oldest_on_top ? -1 : 1;
+            }
+
             if ( $sort_mode === 'time' ) {
-                $a_creation = ! empty( $a['is_creation'] );
-                $b_creation = ! empty( $b['is_creation'] );
-
-                if ( $a_creation !== $b_creation ) {
-                    if ( $oldest_on_top ) {
-                        return $a_creation ? -1 : 1;
-                    }
-
-                    return $a_creation ? 1 : -1;
-                }
-
                 $cmp = (int) ( $a['changed_at'] ?? 0 ) <=> (int) ( $b['changed_at'] ?? 0 );
             } else {
                 $cmp = strcasecmp( wp_strip_all_tags( $a['text'] ), wp_strip_all_tags( $b['text'] ) );
@@ -109,11 +105,11 @@ function wpc_format_change_comments_html( array $items, $as_list, $sort_mode = '
  */
 function wpc_render_table_row( $date_str, $comment_html, $author, $show_author ) {
     $output  = '<tr>';
-    $output .= sprintf( '<td>%s</td>', $date_str );
-    $output .= sprintf( '<td>%s</td>', $comment_html );
+    $output .= sprintf( '<td class="wpc-changelog-col-date">%s</td>', $date_str );
+    $output .= sprintf( '<td class="wpc-changelog-col-change">%s</td>', $comment_html );
 
     if ( $show_author ) {
-        $output .= sprintf( '<td>%s</td>', $author );
+        $output .= sprintf( '<td class="wpc-changelog-col-author">%s</td>', $author );
     }
 
     $output .= '</tr>';
@@ -167,27 +163,45 @@ function wpc_render_changelog_table( array $entries, array $attributes ) {
     $change_field_sort  = ! empty( $attributes['changeFieldSort'] ) ? $attributes['changeFieldSort'] : 'time';
     $change_field_order = ! empty( $attributes['changeFieldOrder'] ) ? $attributes['changeFieldOrder'] : 'newest_first';
     $sort_order         = ! empty( $attributes['sortOrder'] ) ? $attributes['sortOrder'] : 'desc';
+    $show_caption       = ! isset( $attributes['showCaption'] ) || ! empty( $attributes['showCaption'] );
+    $caption            = array_key_exists( 'caption', $attributes )
+        ? trim( (string) $attributes['caption'] )
+        : '';
     $wrapper_class      = wpc_get_wrapper_classes( $attributes );
     $table_class        = trim( 'wpc-change-log-table ' . wpc_get_table_classes( $attributes ) );
-    $rows               = wpc_build_change_log_table_rows( $entries, $consolidate_dates );
+    $rows = wpc_build_change_log_table_rows( $entries, $consolidate_dates );
 
-    if ( $consolidate_dates ) {
-        $rows = wpc_sort_consolidated_rows( $rows, $sort_order );
+    // Always apply Sort Order to the final table rows (consolidated or not).
+    $rows = wpc_sort_consolidated_rows( $rows, $sort_order );
+
+    if ( $show_caption && '' === $caption ) {
+        $caption = wpc_get_default_table_caption();
+    }
+
+    $table  = '<table class="' . esc_attr( $table_class ) . '">';
+    $table .= '<thead><tr>';
+    $table .= '<th class="wpc-changelog-col-date">' . esc_html__( 'Date', 'wp-changelog' ) . '</th>';
+    $table .= '<th class="wpc-changelog-col-change">' . esc_html__( 'Change', 'wp-changelog' ) . '</th>';
+
+    if ( $show_author ) {
+        $table .= '<th class="wpc-changelog-col-author">' . esc_html__( 'Author', 'wp-changelog' ) . '</th>';
+    }
+
+    $table .= '</tr></thead><tbody>';
+    $table .= wpc_render_table_rows( $rows, $show_author, $list_changes, $change_field_sort, $change_field_order );
+    $table .= '</tbody></table>';
+
+    // Editor preview: return only the table so figcaption can sit in the same figure.
+    if ( ! empty( $attributes['editorPreview'] ) ) {
+        return $table;
     }
 
     $output  = '<figure class="' . esc_attr( $wrapper_class ) . '">';
-    $output .= '<table class="' . esc_attr( $table_class ) . '">';
-    $output .= '<thead><tr>';
-    $output .= '<th>' . esc_html__( 'Date', 'wp-changelog' ) . '</th>';
-    $output .= '<th>' . esc_html__( 'Change', 'wp-changelog' ) . '</th>';
-
-    if ( $show_author ) {
-        $output .= '<th>' . esc_html__( 'Author', 'wp-changelog' ) . '</th>';
+    $output .= $table;
+    if ( $show_caption && '' !== $caption ) {
+        $output .= '<figcaption class="wp-block-table__caption">' . esc_html( $caption ) . '</figcaption>';
     }
-
-    $output .= '</tr></thead><tbody>';
-    $output .= wpc_render_table_rows( $rows, $show_author, $list_changes, $change_field_sort, $change_field_order );
-    $output .= '</tbody></table></figure>';
+    $output .= '</figure>';
 
     return $output;
 }

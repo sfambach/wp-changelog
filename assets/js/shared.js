@@ -168,6 +168,145 @@ window.wpcChangelog.createRow = function( authorName ) {
 };
 
 /**
+ * Format an ISO datetime as d.m.Y.
+ *
+ * @param {string} isoDate ISO date string.
+ * @returns {string}
+ */
+window.wpcChangelog.formatDateFromIso = function( isoDate ) {
+    if ( ! isoDate ) {
+        return '';
+    }
+
+    var parsed = new Date( isoDate );
+    if ( Number.isNaN( parsed.getTime() ) ) {
+        return '';
+    }
+
+    return parsed.getDate().toString().padStart( 2, '0' ) + '.' +
+        ( parsed.getMonth() + 1 ).toString().padStart( 2, '0' ) + '.' +
+        parsed.getFullYear();
+};
+
+/**
+ * Collect changelog dates already present on the page (notes + post date).
+ *
+ * @param {Object} data wp.data module.
+ * @returns {Map<string, {date: string, author: string, changedAt: number}>}
+ */
+window.wpcChangelog.collectPageChangelogDates = function( data ) {
+    var dates = new Map();
+    var editorBlocks = data.select( 'core/block-editor' ).getBlocks();
+    var postDate = data.select( 'core/editor' ).getEditedPostAttribute( 'date' );
+    var postDateFormatted = window.wpcChangelog.formatDateFromIso( postDate );
+    var currentUser = data.select( 'core' ).getCurrentUser();
+    var authorName = currentUser ? currentUser.name : '';
+
+    function walk( blockList ) {
+        ( blockList || [] ).forEach( function( block ) {
+            if (
+                ( block.name === 'wpc/change-item' || block.name === 'wpc/single-change-note' ) &&
+                block.attributes &&
+                block.attributes.date
+            ) {
+                dates.set( block.attributes.date, {
+                    date: block.attributes.date,
+                    author: block.attributes.author || authorName,
+                    changedAt: block.attributes.changedAt || 0
+                } );
+            }
+
+            if ( block.innerBlocks && block.innerBlocks.length ) {
+                walk( block.innerBlocks );
+            }
+        } );
+    }
+
+    if ( postDateFormatted ) {
+        dates.set( postDateFormatted, {
+            date: postDateFormatted,
+            author: authorName,
+            changedAt: postDate ? Math.floor( new Date( postDate ).getTime() / 1000 ) : 0
+        } );
+    }
+
+    walk( editorBlocks );
+    return dates;
+};
+
+/**
+ * Add missing page changelog dates to Multi Change Note rows.
+ *
+ * @param {Array<Object>} currentRows Existing rows.
+ * @param {Object}        data        wp.data module.
+ * @returns {Array<Object>}
+ */
+window.wpcChangelog.syncMissingDatesFromPage = function( currentRows, data ) {
+    var pageDates = window.wpcChangelog.collectPageChangelogDates( data );
+    var existingDates = new Set(
+        ( currentRows || [] ).map( function( row ) {
+            return row.date;
+        } )
+    );
+    var nextRows = ( currentRows || [] ).slice();
+    var currentUser = data.select( 'core' ).getCurrentUser();
+    var defaultAuthor = currentUser ? currentUser.name : '';
+    var now = Math.floor( Date.now() / 1000 );
+
+    pageDates.forEach( function( info, date ) {
+        if ( existingDates.has( date ) ) {
+            return;
+        }
+
+        nextRows.push(
+            Object.assign( window.wpcChangelog.createRow( info.author || defaultAuthor ), {
+                date: date,
+                comment: '',
+                author: info.author || defaultAuthor,
+                changedAt: info.changedAt || now
+            } )
+        );
+        existingDates.add( date );
+    } );
+
+    return window.wpcChangelog.sortRowsByDate( nextRows );
+};
+
+/**
+ * Default table caption by document language.
+ *
+ * @returns {string}
+ */
+window.wpcChangelog.getDefaultTableCaption = function() {
+    var lang = ( document.documentElement.lang || '' ).toLowerCase();
+    if ( 0 === lang.indexOf( 'de' ) ) {
+        return 'Logbuch';
+    }
+    return 'Changelog';
+};
+
+/**
+ * Small editor-only label showing the block display name.
+ *
+ * @param {Function} el    wp.element.createElement.
+ * @param {string}   title Block title shown in the inserter.
+ * @returns {*} React element.
+ */
+window.wpcChangelog.renderEditorBlockLabel = function( el, title ) {
+    return el( 'span', {
+        className: 'wpc-editor-block-label',
+        style: {
+            display: 'block',
+            fontSize: '11px',
+            fontWeight: '600',
+            color: '#1e1e1e',
+            marginBottom: '6px',
+            letterSpacing: '0.02em'
+        }
+    }, title || '' );
+};
+
+/**
  * Register a Single Change Note block variant (current or legacy slug).
  *
  * @param {Object} blocks     wp.blocks module.
@@ -185,6 +324,7 @@ window.wpcChangelog.registerNoteBlock = function( blocks, element, components, d
     var __ = i18n.__;
     var wpc = window.wpcChangelog;
     var supports = options.supports || {};
+    var blockTitle = options.title || '';
 
     blocks.registerBlockType( blockName, {
         title: options.title,
@@ -220,45 +360,48 @@ window.wpcChangelog.registerNoteBlock = function( blocks, element, components, d
                 }
             }, [ currentUser ] );
 
-            return el( 'div', {
-                className: 'wpc-block-surface',
-                style: {
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    padding: '2px 6px',
-                    marginBottom: '4px',
-                    borderRadius: '2px',
-                    borderLeft: '3px solid #007cba'
-                }
-            },
-                el( 'div', { style: { width: '90px' }, className: 'wpc-minimal-input' },
-                    el( TextControl, {
-                        value: attributes.date,
-                        onChange: function( value ) { setAttributes( { date: value } ); },
-                        placeholder: __( 'Date', 'wp-changelog' ),
-                        style: { height: '28px', fontSize: '12px' }
-                    } )
-                ),
-                el( 'div', { style: { flex: '1' }, className: 'wpc-minimal-input' },
-                    el( TextControl, {
-                        value: attributes.comment,
-                        onChange: function( value ) {
-                            setAttributes( {
-                                comment: value,
-                                changedAt: Math.floor( Date.now() / 1000 )
-                            } );
-                        },
-                        placeholder: __( 'What was changed? (e.g. Fixed typo...)', 'wp-changelog' ),
-                        style: { height: '28px', fontSize: '12px' }
-                    } )
-                ),
-                el( 'div', { style: { width: '110px', opacity: '0.6' }, className: 'wpc-minimal-input' },
-                    el( TextControl, {
-                        value: attributes.author || __( 'Loading...', 'wp-changelog' ),
-                        disabled: true,
-                        style: { height: '28px', fontSize: '12px' }
-                    } )
+            return el( 'div', { className: 'wpc-block-surface-wrap' },
+                wpc.renderEditorBlockLabel( el, blockTitle ),
+                el( 'div', {
+                    className: 'wpc-block-surface',
+                    style: {
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '2px 6px',
+                        marginBottom: '4px',
+                        borderRadius: '2px',
+                        borderLeft: '3px solid #007cba'
+                    }
+                },
+                    el( 'div', { style: { width: '7rem', flex: '0 0 7rem' }, className: 'wpc-minimal-input wpc-changelog-col-date' },
+                        el( TextControl, {
+                            value: attributes.date,
+                            onChange: function( value ) { setAttributes( { date: value } ); },
+                            placeholder: __( 'Date', 'wp-changelog' ),
+                            style: { height: '28px', fontSize: '12px' }
+                        } )
+                    ),
+                    el( 'div', { style: { flex: '1 1 auto', minWidth: 0 }, className: 'wpc-minimal-input wpc-changelog-col-change' },
+                        el( TextControl, {
+                            value: attributes.comment,
+                            onChange: function( value ) {
+                                setAttributes( {
+                                    comment: value,
+                                    changedAt: Math.floor( Date.now() / 1000 )
+                                } );
+                            },
+                            placeholder: __( 'What was changed? (e.g. Fixed typo...)', 'wp-changelog' ),
+                            style: { height: '28px', fontSize: '12px' }
+                        } )
+                    ),
+                    el( 'div', { style: { width: '9rem', flex: '0 0 9rem', opacity: '0.6' }, className: 'wpc-minimal-input wpc-changelog-col-author' },
+                        el( TextControl, {
+                            value: attributes.author || __( 'Loading...', 'wp-changelog' ),
+                            disabled: true,
+                            style: { height: '28px', fontSize: '12px' }
+                        } )
+                    )
                 )
             );
         },

@@ -121,33 +121,7 @@ function wpc_collect_multi_change_note_items( array $blocks ) {
 }
 
 /**
- * Collect all rows from Revision Multiline Note blocks in parsed content.
- *
- * Only rows with a non-empty comment are included, matching Multi Change Note rules.
- *
- * @param array $blocks Parsed block list.
- * @return array Changelog entries sorted by date.
- */
-function wpc_collect_revision_multiline_note_items( array $blocks ) {
-    $items = [];
-
-    foreach ( wpc_find_blocks_by_names( $blocks, wpc_revision_multiline_note_block_names() ) as $block ) {
-        $rows = ! empty( $block['attrs']['rows'] ) && is_array( $block['attrs']['rows'] ) ? $block['attrs']['rows'] : [];
-
-        foreach ( $rows as $row ) {
-            if ( empty( trim( $row['comment'] ?? '' ) ) ) {
-                continue;
-            }
-
-            $items[] = wpc_parse_multi_change_note_row( $row );
-        }
-    }
-
-    return wpc_sort_entries_by_date( $items );
-}
-
-/**
- * Collect all change notes from post content (single, multi, and revision blocks).
+ * Collect all change notes from post content (single and multi blocks).
  *
  * @param string $post_content Raw post content.
  * @return array Changelog entries sorted by date.
@@ -166,55 +140,44 @@ function wpc_collect_change_items( $post_content ) {
     }
 
     $change_items = array_merge( $change_items, wpc_collect_multi_change_note_items( $blocks ) );
-    $change_items = array_merge( $change_items, wpc_collect_revision_multiline_note_items( $blocks ) );
-
     return wpc_sort_entries_by_date( $change_items );
-}
-
-/**
- * Derive post creation date metadata for the initial changelog row.
- *
- * @param WP_Post $post Post object.
- * @return array {
- *     @type int    $timestamp  Post creation Unix timestamp.
- *     @type int    $changed_at Same as timestamp.
- *     @type string $date_str   Formatted creation date.
- * }
- */
-function wpc_get_post_creation_meta( WP_Post $post ) {
-    $latest_post = get_post( $post->ID );
-
-    if ( ! $latest_post ) {
-        $latest_post = $post;
-    }
-
-    $created_timestamp = wpc_get_post_earliest_version_timestamp( $latest_post );
-
-    return [
-        'timestamp'  => $created_timestamp,
-        'changed_at' => $created_timestamp,
-        'date_str'   => wpc_format_timestamp( $created_timestamp ),
-    ];
 }
 
 /**
  * Build the synthetic "Post created" changelog entry.
  *
- * @param WP_Post $post Post object.
+ * The timestamp is derived from the collected change notes: the earliest
+ * note date is used. When no notes exist, falls back to the post's own
+ * publish date (post_date).
+ *
+ * @param WP_Post $post         Post object.
+ * @param array   $change_items Already collected changelog entries.
  * @return array Changelog entry including HTML comment markup.
  */
-function wpc_build_creation_entry( WP_Post $post ) {
-    $author_obj = get_user_by( 'id', $post->post_author );
-    $meta       = wpc_get_post_creation_meta( $post );
+function wpc_build_creation_entry( WP_Post $post, array $change_items = [] ) {
+    $earliest = 0;
 
-    return array_merge(
-        $meta,
-        [
-            'comment'      => '<strong>' . esc_html__( 'Post created', 'wp-changelog' ) . '</strong>',
-            'author'       => $author_obj ? $author_obj->display_name : __( 'System', 'wp-changelog' ),
-            'is_creation'  => true,
-        ]
-    );
+    foreach ( $change_items as $item ) {
+        $ts = isset( $item['timestamp'] ) ? (int) $item['timestamp'] : 0;
+        if ( $ts > 0 && ( 0 === $earliest || $ts < $earliest ) ) {
+            $earliest = $ts;
+        }
+    }
+
+    if ( ! $earliest ) {
+        $earliest = wpc_get_post_earliest_version_timestamp( $post );
+    }
+
+    $author_obj = get_user_by( 'id', $post->post_author );
+
+    return [
+        'timestamp'  => $earliest,
+        'changed_at' => $earliest,
+        'date_str'   => wpc_format_timestamp( $earliest ),
+        'comment'    => '<strong>' . esc_html__( 'Post created', 'wp-changelog' ) . '</strong>',
+        'author'     => $author_obj ? $author_obj->display_name : __( 'System', 'wp-changelog' ),
+        'is_creation' => true,
+    ];
 }
 
 /**
@@ -255,7 +218,7 @@ function wpc_collect_changelog_entries( $post, $is_template_preview ) {
     }
 
     $change_items   = wpc_collect_change_items( $post->post_content );
-    $creation_entry = wpc_build_creation_entry( $post );
+    $creation_entry = wpc_build_creation_entry( $post, $change_items );
 
     return array_merge( [ $creation_entry ], $change_items );
 }
@@ -268,6 +231,8 @@ function wpc_collect_changelog_entries( $post, $is_template_preview ) {
  * @return array Sorted entries.
  */
 function wpc_sort_changelog_entries( array $entries, $sort_order ) {
+    $sort_order = ( 'asc' === $sort_order ) ? 'asc' : 'desc';
+
     usort(
         $entries,
         function ( $a, $b ) use ( $sort_order ) {
@@ -280,11 +245,7 @@ function wpc_sort_changelog_entries( array $entries, $sort_order ) {
                 $cmp = $a_ts <=> $b_ts;
             }
 
-            if ( $sort_order === 'asc' ) {
-                return $cmp;
-            }
-
-            return -$cmp;
+            return 'asc' === $sort_order ? $cmp : -$cmp;
         }
     );
 
@@ -299,18 +260,30 @@ function wpc_sort_changelog_entries( array $entries, $sort_order ) {
  * @return array Sorted rows.
  */
 function wpc_sort_consolidated_rows( array $rows, $sort_order ) {
+    $sort_order = ( 'asc' === $sort_order ) ? 'asc' : 'desc';
+
     usort(
         $rows,
         function ( $a, $b ) use ( $sort_order ) {
             $a_ts = wpc_parse_date_to_timestamp( $a['date_str'] ?? '' );
             $b_ts = wpc_parse_date_to_timestamp( $b['date_str'] ?? '' );
-            $cmp  = $a_ts <=> $b_ts;
+            $cmp = $a_ts <=> $b_ts;
 
-            if ( $sort_order === 'asc' ) {
-                return $cmp;
+            if ( 0 === $cmp ) {
+                $a_items = $a['items'] ?? [];
+                $b_items = $b['items'] ?? [];
+                $a_changed = 0;
+                $b_changed = 0;
+                foreach ( $a_items as $item ) {
+                    $a_changed = max( $a_changed, (int) ( $item['changed_at'] ?? 0 ) );
+                }
+                foreach ( $b_items as $item ) {
+                    $b_changed = max( $b_changed, (int) ( $item['changed_at'] ?? 0 ) );
+                }
+                $cmp = $a_changed <=> $b_changed;
             }
 
-            return -$cmp;
+            return 'asc' === $sort_order ? $cmp : -$cmp;
         }
     );
 
@@ -475,247 +448,33 @@ function wpc_format_entries_as_multiline_text( array $entries, $show_author ) {
 }
 
 /**
- * Build one changelog-style row from a WordPress post or revision.
+ * Numeric d.m.Y sort key matching the editor helper parseDateSortValue().
  *
- * @param WP_Post $version_post Post or revision object.
- * @param string  $label        Description shown in the Change column.
- * @return array Normalized entry array.
+ * @param string $date_str Date in d.m.Y format.
+ * @return int
  */
-function wpc_parse_version_entry( WP_Post $version_post, $label ) {
-    $author_obj = get_user_by( 'id', $version_post->post_author );
-    $timestamp  = wpc_get_post_version_timestamp( $version_post );
-
-    if ( ! $timestamp ) {
-        $timestamp = time();
+function wpc_parse_date_sort_value( $date_str ) {
+    if ( empty( $date_str ) || ! is_string( $date_str ) ) {
+        return 0;
     }
 
-    return [
-        'timestamp'  => $timestamp,
-        'changed_at' => $timestamp,
-        'date_str'   => wpc_format_timestamp( $timestamp ),
-        'comment'    => esc_html( $label ),
-        'author'     => $author_obj ? esc_html( $author_obj->display_name ) : __( 'Unknown', 'wp-changelog' ),
-    ];
+    $parts = explode( '.', $date_str );
+    if ( count( $parts ) !== 3 ) {
+        return 0;
+    }
+
+    return ( (int) $parts[2] * 10000 ) + ( (int) $parts[1] * 100 ) + (int) $parts[0];
 }
 
 /**
- * Sample version rows for template and pattern previews.
+ * Sort Log-Liste rows by date/comment/author using asc/desc order.
  *
- * @return array Version entries for editor preview.
- */
-function wpc_get_template_preview_version_entries() {
-    return [
-        [
-            'timestamp'  => time() - DAY_IN_SECONDS,
-            'changed_at' => time() - DAY_IN_SECONDS,
-            'date_str'   => wpc_format_timestamp( time() - DAY_IN_SECONDS ),
-            'comment'    => esc_html__( 'Initial version', 'wp-changelog' ),
-            'author'     => __( 'System', 'wp-changelog' ),
-        ],
-        [
-            'timestamp'  => time(),
-            'changed_at' => time(),
-            'date_str'   => wpc_format_timestamp( time() ),
-            'comment'    => esc_html__( 'Revision saved', 'wp-changelog' ),
-            'author'     => __( 'John Doe', 'wp-changelog' ),
-        ],
-    ];
-}
-
-/**
- * Collect WordPress post versions (current state and stored revisions).
- *
- * @param WP_Post|null $post                Post object.
- * @param bool         $is_template_preview Whether dummy preview data should be used.
- * @param array        $attributes          Block attributes.
- * @return array Sorted version entries ready for multiline formatting.
- */
-function wpc_collect_post_version_entries( $post, $is_template_preview, array $attributes ) {
-    if ( $is_template_preview ) {
-        return wpc_get_template_preview_version_entries();
-    }
-
-    $entries = [];
-
-    if ( ! isset( $attributes['includeCurrentVersion'] ) || $attributes['includeCurrentVersion'] ) {
-        $entries[] = wpc_parse_version_entry( $post, __( 'Current revision', 'wp-changelog' ) );
-    }
-
-    $revisions = wp_get_post_revisions(
-        $post->ID,
-        [
-            'order'          => 'ASC',
-            'posts_per_page' => 100,
-            'check_enabled'  => false,
-        ]
-    );
-
-    if ( is_array( $revisions ) ) {
-        foreach ( $revisions as $revision ) {
-            if ( $revision instanceof WP_Post ) {
-                $entries[] = wpc_parse_version_entry( $revision, __( 'Revision saved', 'wp-changelog' ) );
-            }
-        }
-    }
-
-    $sort_order = ! empty( $attributes['sortOrder'] ) ? $attributes['sortOrder'] : 'desc';
-
-    return wpc_sort_changelog_entries( $entries, $sort_order );
-}
-
-/**
- * Build one editable row from a revision date slot.
- *
- * @param array $slot Date slot with date, author, and changedAt keys.
- * @return array Row object stored in block attributes.
- */
-function wpc_create_revision_note_row( array $slot ) {
-    return [
-        'id'        => wpc_generate_row_id(),
-        'date'      => $slot['date'],
-        'comment'   => '',
-        'author'    => $slot['author'],
-        'changedAt' => (int) $slot['changedAt'],
-    ];
-}
-
-/**
- * Collect one row per unique revision date from WordPress post versions.
- *
- * When multiple revisions share a calendar date, the latest revision on that
- * date supplies the author and changedAt values.
- *
- * @param WP_Post $post            Post object.
- * @param bool    $include_current Whether the current post state should be included.
- * @param array   $pending_data    Optional unsaved post fields (post_modified, post_author).
- * @return array List of date slots with date, author, and changedAt keys.
- */
-function wpc_collect_revision_date_slots( WP_Post $post, $include_current, array $pending_data = [] ) {
-    $slots   = [];
-    $sources = [];
-
-    if ( $include_current ) {
-        if ( ! empty( $pending_data['post_modified'] ) ) {
-            $timestamp = strtotime( $pending_data['post_modified'] );
-
-            if ( ! $timestamp && ! empty( $pending_data['post_date'] ) ) {
-                $timestamp = strtotime( $pending_data['post_date'] );
-            }
-
-            if ( ! $timestamp ) {
-                $timestamp = time();
-            }
-
-            $author_id = ! empty( $pending_data['post_author'] )
-                ? (int) $pending_data['post_author']
-                : (int) $post->post_author;
-            $author_obj = get_user_by( 'id', $author_id );
-            $date_str   = wpc_format_timestamp( $timestamp );
-            $slots[ $date_str ] = [
-                'date'      => $date_str,
-                'author'    => $author_obj ? esc_html( $author_obj->display_name ) : __( 'Unknown', 'wp-changelog' ),
-                'changedAt' => $timestamp,
-            ];
-        } else {
-            $sources[] = $post;
-        }
-    }
-
-    $revisions = wp_get_post_revisions(
-        $post->ID,
-        [
-            'order'          => 'ASC',
-            'posts_per_page' => 100,
-            'check_enabled'  => false,
-        ]
-    );
-
-    if ( is_array( $revisions ) ) {
-        foreach ( $revisions as $revision ) {
-            if ( $revision instanceof WP_Post ) {
-                $sources[] = $revision;
-            }
-        }
-    }
-
-    foreach ( $sources as $version_post ) {
-        $timestamp = wpc_get_post_version_timestamp( $version_post );
-
-        if ( ! $timestamp ) {
-            $timestamp = time();
-        }
-
-        $date_str   = wpc_format_timestamp( $timestamp );
-        $author_obj = get_user_by( 'id', $version_post->post_author );
-        $author     = $author_obj ? esc_html( $author_obj->display_name ) : __( 'Unknown', 'wp-changelog' );
-
-        if ( ! isset( $slots[ $date_str ] ) || $timestamp >= $slots[ $date_str ]['changedAt'] ) {
-            $slots[ $date_str ] = [
-                'date'      => $date_str,
-                'author'    => $author,
-                'changedAt' => $timestamp,
-            ];
-        }
-    }
-
-    return array_values( $slots );
-}
-
-/**
- * Merge stored rows with revision date slots, preserving user comments.
- *
- * @param array $existing_rows Rows from block attributes.
- * @param array $date_slots    Slots from wpc_collect_revision_date_slots().
- * @return array Synced row list.
- */
-function wpc_sync_revision_note_rows( array $existing_rows, array $date_slots ) {
-    $by_date = [];
-
-    foreach ( $existing_rows as $row ) {
-        if ( ! is_array( $row ) || empty( $row['date'] ) ) {
-            continue;
-        }
-
-        $by_date[ $row['date'] ] = $row;
-    }
-
-    $merged = [];
-
-    foreach ( $date_slots as $slot ) {
-        $date = $slot['date'];
-
-        if ( isset( $by_date[ $date ] ) ) {
-            $row = $by_date[ $date ];
-
-            if ( empty( $row['id'] ) ) {
-                $row['id'] = wpc_generate_row_id();
-            }
-
-            $row['author'] = $slot['author'];
-
-            if ( empty( $row['changedAt'] ) ) {
-                $row['changedAt'] = (int) $slot['changedAt'];
-            }
-
-            $merged[] = $row;
-            continue;
-        }
-
-        $merged[] = wpc_create_revision_note_row( $slot );
-    }
-
-    return $merged;
-}
-
-/**
- * Sort revision note rows for display using the block table settings.
- *
- * @param array  $rows       Row objects from block attributes.
+ * @param array  $rows       Row objects from multi-change-note attributes.
  * @param string $sort_field "date", "comment", or "author".
  * @param string $sort_order "asc" or "desc".
  * @return array Sorted rows.
  */
-function wpc_sort_revision_note_rows( array $rows, $sort_field, $sort_order ) {
+function wpc_sort_multi_note_rows( array $rows, $sort_field = 'date', $sort_order = 'desc' ) {
     $sort_field = in_array( $sort_field, [ 'date', 'comment', 'author' ], true ) ? $sort_field : 'date';
     $sort_order = $sort_order === 'asc' ? 'asc' : 'desc';
 
@@ -739,11 +498,7 @@ function wpc_sort_revision_note_rows( array $rows, $sort_field, $sort_order ) {
                 $cmp = (int) ( $a['changedAt'] ?? 0 ) <=> (int) ( $b['changedAt'] ?? 0 );
             }
 
-            if ( $sort_order === 'asc' ) {
-                return $cmp;
-            }
-
-            return -$cmp;
+            return $sort_order === 'asc' ? $cmp : -$cmp;
         }
     );
 
@@ -751,74 +506,109 @@ function wpc_sort_revision_note_rows( array $rows, $sort_field, $sort_order ) {
 }
 
 /**
- * Sync revision note rows for one post and block attribute set.
+ * Sort Log-Liste rows by date, then by changedAt (oldest first).
  *
- * @param int   $post_id      Post ID.
- * @param array $attributes   Block attributes.
- * @param array $pending_data Optional unsaved post fields for save-time sync.
- * @return array Synced rows.
+ * @deprecated Use wpc_sort_multi_note_rows().
+ * @param array $rows Row objects from multi-change-note attributes.
+ * @return array Sorted rows.
  */
-function wpc_sync_revision_note_rows_for_post( $post_id, array $attributes, array $pending_data = [] ) {
-    $post = get_post( $post_id );
-
-    if ( ! $post instanceof WP_Post ) {
-        return [];
-    }
-
-    $include_current = ! isset( $attributes['includeCurrentVersion'] ) || $attributes['includeCurrentVersion'];
-    $existing_rows   = ! empty( $attributes['rows'] ) && is_array( $attributes['rows'] ) ? $attributes['rows'] : [];
-    $date_slots      = wpc_collect_revision_date_slots( $post, $include_current, $pending_data );
-
-    return wpc_sync_revision_note_rows( $existing_rows, $date_slots );
+function wpc_sort_multi_note_rows_by_date( array $rows ) {
+    return wpc_sort_multi_note_rows( $rows, 'date', 'asc' );
 }
 
 /**
- * Recursively sync revision multiline note blocks inside parsed content.
+ * Recursively sort Multi Change Note rows inside parsed blocks.
  *
- * @param array $blocks       Parsed block list.
- * @param int   $post_id      Post ID.
- * @param array $pending_data Optional unsaved post fields for save-time sync.
- * @return array Updated block list.
+ * @param array $blocks Parsed block list.
+ * @return array {
+ *     @type array $blocks  Updated blocks.
+ *     @type bool  $changed Whether any row order changed.
+ * }
  */
-function wpc_sync_revision_blocks_in_parsed_blocks( array $blocks, $post_id, array $pending_data = [] ) {
+function wpc_sort_multi_note_blocks_in_parsed_blocks( array $blocks ) {
+    $changed = false;
+
     foreach ( $blocks as &$block ) {
         if ( ! empty( $block['innerBlocks'] ) ) {
-            $block['innerBlocks'] = wpc_sync_revision_blocks_in_parsed_blocks( $block['innerBlocks'], $post_id, $pending_data );
+            $inner = wpc_sort_multi_note_blocks_in_parsed_blocks( $block['innerBlocks'] );
+            $block['innerBlocks'] = $inner['blocks'];
+            $changed              = $changed || $inner['changed'];
         }
 
-        if ( empty( $block['blockName'] ) || ! in_array( $block['blockName'], wpc_revision_multiline_note_block_names(), true ) ) {
+        if ( empty( $block['blockName'] ) || ! in_array( $block['blockName'], wpc_multi_change_note_block_names(), true ) ) {
             continue;
         }
 
         $attrs = is_array( $block['attrs'] ?? null ) ? $block['attrs'] : [];
-        $attrs['rows'] = wpc_sync_revision_note_rows_for_post( $post_id, $attrs, $pending_data );
-        $block['attrs'] = $attrs;
+        $rows  = ! empty( $attrs['rows'] ) && is_array( $attrs['rows'] ) ? $attrs['rows'] : [];
+
+        if ( empty( $rows ) ) {
+            continue;
+        }
+
+        $sort_field = ! empty( $attrs['sortField'] ) ? $attrs['sortField'] : 'date';
+        $sort_order = ! empty( $attrs['sortOrder'] ) ? $attrs['sortOrder'] : 'desc';
+        $sorted     = wpc_sort_multi_note_rows( $rows, $sort_field, $sort_order );
+        $ids        = array_values(
+            array_map(
+                static function ( $row ) {
+                    return is_array( $row ) ? ( $row['id'] ?? '' ) : '';
+                },
+                $rows
+            )
+        );
+        $sorted_ids = array_values(
+            array_map(
+                static function ( $row ) {
+                    return is_array( $row ) ? ( $row['id'] ?? '' ) : '';
+                },
+                $sorted
+            )
+        );
+
+        if ( $ids !== $sorted_ids ) {
+            $attrs['rows']  = $sorted;
+            $block['attrs'] = $attrs;
+            $changed        = true;
+        }
     }
     unset( $block );
 
-    return $blocks;
+    return [
+        'blocks'  => $blocks,
+        'changed' => $changed,
+    ];
 }
 
 /**
- * Sample rows for template and pattern previews of the revision note block.
+ * Persist Log-Liste row order (by date) when a post is saved.
  *
- * @return array Row objects.
+ * @param array $data    Sanitized post data.
+ * @param array $postarr Raw post data.
+ * @return array
  */
-function wpc_get_template_preview_revision_rows() {
-    return [
-        [
-            'id'        => 'row-preview-1',
-            'date'      => wpc_format_timestamp( time() - DAY_IN_SECONDS ),
-            'comment'   => __( 'Initial version', 'wp-changelog' ),
-            'author'    => __( 'System', 'wp-changelog' ),
-            'changedAt' => time() - DAY_IN_SECONDS,
-        ],
-        [
-            'id'        => 'row-preview-2',
-            'date'      => wpc_format_timestamp( time() ),
-            'comment'   => '',
-            'author'    => __( 'John Doe', 'wp-changelog' ),
-            'changedAt' => time(),
-        ],
-    ];
+function wpc_sort_multi_note_rows_on_save( $data, $postarr ) {
+    if ( empty( $data['post_content'] ) || ! is_string( $data['post_content'] ) ) {
+        return $data;
+    }
+
+    if ( ! has_blocks( $data['post_content'] ) ) {
+        return $data;
+    }
+
+    if (
+        false === strpos( $data['post_content'], 'wp:wpc/multi-change-note' )
+        && false === strpos( $data['post_content'], 'wp:wpc/multi-note' )
+    ) {
+        return $data;
+    }
+
+    $result = wpc_sort_multi_note_blocks_in_parsed_blocks( parse_blocks( $data['post_content'] ) );
+
+    if ( $result['changed'] ) {
+        $data['post_content'] = serialize_blocks( $result['blocks'] );
+    }
+
+    return $data;
 }
+add_filter( 'wp_insert_post_data', 'wpc_sort_multi_note_rows_on_save', 20, 2 );

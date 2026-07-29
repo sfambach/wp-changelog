@@ -6,10 +6,14 @@
     var ToggleControl = components.ToggleControl;
     var SelectControl = components.SelectControl;
     var PanelBody = components.PanelBody;
+    var ToolbarGroup = components.ToolbarGroup;
+    var ToolbarButton = components.ToolbarButton;
     var InspectorControls = blockEditor.InspectorControls;
     var BlockControls = blockEditor.BlockControls;
     var BlockAlignmentControl = blockEditor.BlockAlignmentControl;
+    var RichText = blockEditor.RichText;
     var __ = i18n.__;
+    var wpc = window.wpcChangelog;
 
     /**
      * Register one Change Log block variant.
@@ -18,6 +22,8 @@
      * @param {Object} options   title and optional supports.
      */
     function registerChangeLogBlock( blockName, options ) {
+        var blockTitle = options.title || '';
+
         blocks.registerBlockType( blockName, {
             title: options.title,
             icon: 'editor-table',
@@ -39,6 +45,9 @@
                 changeFieldOrder: { type: 'string', default: 'newest_first' },
                 sortOrder: { type: 'string', default: 'desc' },
                 visibleOnPage: { type: 'boolean', default: true },
+                showCaption: { type: 'boolean', default: true },
+                caption: { type: 'string', default: '' },
+                editorPreview: { type: 'boolean', default: false },
                 tableStyle: { type: 'string', default: 'default' },
                 align: { type: 'string', default: '' },
                 className: { type: 'string', default: '' }
@@ -60,6 +69,32 @@
                 var refreshToken = refreshState[ 0 ];
                 var setRefreshToken = refreshState[ 1 ];
                 var wasSavingRef = element.useRef( false );
+                var showCaption = false !== attributes.showCaption;
+                var captionValue = attributes.caption || wpc.getDefaultTableCaption();
+                var hasStripes = attributes.tableStyle === 'stripes'
+                    || ( attributes.className && attributes.className.indexOf( 'is-style-stripes' ) !== -1 );
+                var previewFigureClass = [
+                    'wp-block-table',
+                    'wp-block-changelog-table',
+                    hasStripes ? 'is-style-stripes' : ''
+                ].filter( Boolean ).join( ' ' );
+                var previewAttributes = Object.assign( {}, attributes, {
+                    showCaption: false,
+                    editorPreview: true
+                } );
+                var previewQueryKey = [
+                    attributes.sortOrder || 'desc',
+                    attributes.consolidateDates ? '1' : '0',
+                    attributes.changeFieldSort || 'time',
+                    attributes.changeFieldOrder || 'newest_first',
+                    attributes.listChanges ? '1' : '0',
+                    attributes.showAuthor ? '1' : '0',
+                    attributes.tableStyle || 'default',
+                    attributes.className || '',
+                    attributes.hasFixedLayout ? '1' : '0',
+                    attributes.visibleOnPage === false ? '0' : '1',
+                    String( refreshToken )
+                ].join( '|' );
 
                 // Refresh the server preview only after a manual save, not on autosave.
                 useEffect( function() {
@@ -78,8 +113,44 @@
                     }
                 }, [ attributes.changeFieldOrder ] );
 
+                useEffect( function() {
+                    var updates = {};
+
+                    if ( attributes.showCaption === undefined || attributes.showCaption === null ) {
+                        updates.showCaption = true;
+                    }
+
+                    if (
+                        false !== attributes.showCaption &&
+                        ( attributes.caption === undefined || attributes.caption === null || attributes.caption === '' )
+                    ) {
+                        updates.caption = wpc.getDefaultTableCaption();
+                    }
+
+                    if ( Object.keys( updates ).length ) {
+                        setAttributes( updates );
+                    }
+                }, [] );
+
                 return [
                     el( BlockControls, { key: 'controls' },
+                        el( ToolbarGroup, null,
+                            el( ToolbarButton, {
+                                icon: 'table-row-after',
+                                title: __( 'Caption', 'wp-changelog' ),
+                                isPressed: showCaption,
+                                onClick: function() {
+                                    var nextShowCaption = ! showCaption;
+                                    var updates = { showCaption: nextShowCaption };
+
+                                    if ( nextShowCaption && ! attributes.caption ) {
+                                        updates.caption = wpc.getDefaultTableCaption();
+                                    }
+
+                                    setAttributes( updates );
+                                }
+                            } )
+                        ),
                         el( BlockAlignmentControl, {
                             value: attributes.align,
                             onChange: function( nextAlign ) { setAttributes( { align: nextAlign } ); }
@@ -88,12 +159,12 @@
                     el( InspectorControls, { key: 'inspector' },
                         el( PanelBody, { title: __( 'General Settings', 'wp-changelog' ), initialOpen: true },
                             el( SelectControl, {
-                                label: __( 'Sort Order', 'wp-changelog' ),
+                                label: __( 'Sort direction', 'wp-changelog' ),
                                 help: __( 'Which date row appears at the top of the table.', 'wp-changelog' ),
-                                value: attributes.sortOrder,
+                                value: attributes.sortOrder === 'asc' ? 'asc' : 'desc',
                                 options: [
-                                    { label: __( 'Newest on top', 'wp-changelog' ), value: 'desc' },
-                                    { label: __( 'Oldest on top', 'wp-changelog' ), value: 'asc' }
+                                    { label: __( 'Oldest on top', 'wp-changelog' ), value: 'asc' },
+                                    { label: __( 'Newest on top', 'wp-changelog' ), value: 'desc' }
                                 ],
                                 onChange: function( value ) { setAttributes( { sortOrder: value } ); }
                             } ),
@@ -146,30 +217,43 @@
                                 onChange: function( value ) { setAttributes( { changeFieldSort: value } ); }
                             } ),
                             attributes.consolidateDates && el( SelectControl, {
-                                label: __( 'Merged changes sort order', 'wp-changelog' ),
-                                help: __( 'Controls the order of multiple changes within one table cell.', 'wp-changelog' ),
+                                label: __( 'Merged changes direction', 'wp-changelog' ),
+                                help: __( 'Order of multiple changes within one merged table cell.', 'wp-changelog' ),
                                 value: attributes.changeFieldOrder,
                                 options: [
-                                    { label: __( 'Oldest on top', 'wp-changelog' ), value: 'oldest_first' },
-                                    { label: __( 'Newest on top', 'wp-changelog' ), value: 'newest_first' }
+                                    { label: __( 'Oldest first', 'wp-changelog' ), value: 'oldest_first' },
+                                    { label: __( 'Newest first', 'wp-changelog' ), value: 'newest_first' }
                                 ],
                                 onChange: function( value ) { setAttributes( { changeFieldOrder: value } ); }
                             } )
                         )
                     ),
-                    el( 'div', { key: 'preview', className: 'wpc-change-log-preview' },
-                        el( 'span', { style: { display: 'block', fontSize: '11px', color: '#999', marginBottom: '5px', textTransform: 'uppercase' } }, __( 'Table Live Preview:', 'wp-changelog' ) ),
+                    wpc.renderEditorBlockLabel( el, blockTitle ),
+                    el( 'div', { key: 'preview', className: 'wpc-change-log-preview wpc-block-surface-wrap' },
                         attributes.visibleOnPage === false && el( 'span', {
                             style: { display: 'block', fontSize: '11px', color: '#996800', marginBottom: '8px' }
                         }, __( 'Hidden on the public site — editor preview only.', 'wp-changelog' ) ),
-                        el( wp.serverSideRender, {
-                            block: blockName,
-                            attributes: attributes,
-                            urlQueryArgs: {
-                                post_id: currentPostId || 0,
-                                trigger: refreshToken
-                            }
-                        } )
+                        el( 'figure', { className: previewFigureClass },
+                            el( wp.serverSideRender, {
+                                key: 'wpc-ssr-' + previewQueryKey,
+                                block: blockName,
+                                attributes: previewAttributes,
+                                httpMethod: 'POST',
+                                urlQueryArgs: {
+                                    post_id: currentPostId || 0,
+                                    trigger: previewQueryKey
+                                }
+                            } ),
+                            showCaption ? el( RichText, {
+                                tagName: 'figcaption',
+                                className: 'wp-block-table__caption',
+                                value: captionValue,
+                                placeholder: wpc.getDefaultTableCaption(),
+                                onChange: function( value ) {
+                                    setAttributes( { caption: value } );
+                                }
+                            } ) : null
+                        )
                     )
                 ];
             },
@@ -178,11 +262,11 @@
     }
 
     registerChangeLogBlock( 'wpc/change-log', {
-        title: __( 'Change Log', 'wp-changelog' )
+        title: __( 'Logausgabe', 'wp-changelog' )
     } );
 
     registerChangeLogBlock( 'wpc/change-table', {
-        title: __( 'Change Log', 'wp-changelog' ),
+        title: __( 'Logausgabe', 'wp-changelog' ),
         supports: { inserter: false }
     } );
 } )( window.wp.blocks, window.wp.element, window.wp.blockEditor, window.wp.components, window.wp.data, window.wp.i18n );
