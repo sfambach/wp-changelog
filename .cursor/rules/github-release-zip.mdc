@@ -1,0 +1,26 @@
+---
+description: GitHub Releases immer mit korrektem Plugin-ZIP-Prefix erstellen
+alwaysApply: true
+---
+
+# GitHub Release ZIP
+
+Bei GitHub-Releases für dieses Plugin **immer** ein Installations-ZIP anhängen:
+
+```bash
+git archive --format=zip --prefix=wp-changelog/ HEAD -o wp-changelog.zip
+```
+
+## Pflicht
+
+- Prefix **muss** `wp-changelog/` sein (WordPress erwartet diesen Ordnernamen unter `wp-content/plugins/`)
+- Dateiname: `wp-changelog.zip`
+- Am Release anhängen (`gh release create … wp-changelog.zip` oder bestehendem Release hochladen)
+- Nicht ohne Prefix archivieren (sonst landet der Inhalt flach im Plugins-Ordner)
+
+## Beispiel
+
+```bash
+git archive --format=zip --prefix=wp-changelog/ HEAD -o wp-changelog.zip
+gh release create vX.Y.Z --title "vX.Y.Z" --notes "…" wp-changelog.zip
+```

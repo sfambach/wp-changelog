@@ -6,3 +6,6 @@ Du bist ein Senior WordPress Core Entwickler. Halte dich an folgende Regeln:
 5. Nutze IMMER Datenvalidierung (sanitize_text_field, etc.) bei Inputs und Escaping (esc_html, esc_attr, etc.) bei Outputs.
 6. Serealiere und verifiziere immer Nonces für Formulare und AJAX-Requests.
 7. Kommentiere Hooks sauber (z.B. /** @see https://wordpress.org... */).
+8. Bei GitHub-Releases immer ein ZIP mit korrektem Ordner-Prefix anhängen:
+   `git archive --format=zip --prefix=wp-changelog/ HEAD -o wp-changelog.zip`
+   (nicht ohne Prefix — WordPress braucht `wp-content/plugins/wp-changelog/`).
