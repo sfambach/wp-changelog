@@ -228,31 +228,33 @@
                             } )
                         )
                     ),
-                    wpc.renderEditorBlockLabel( el, blockTitle ),
-                    el( 'div', { key: 'preview', className: 'wpc-change-log-preview wpc-block-surface-wrap' },
-                        attributes.visibleOnPage === false && el( 'span', {
-                            style: { display: 'block', fontSize: '11px', color: '#996800', marginBottom: '8px' }
-                        }, __( 'Hidden on the public site — editor preview only.', 'wp-changelog' ) ),
-                        el( 'figure', { className: previewFigureClass },
-                            el( wp.serverSideRender, {
-                                key: 'wpc-ssr-' + previewQueryKey,
-                                block: blockName,
-                                attributes: previewAttributes,
-                                httpMethod: 'POST',
-                                urlQueryArgs: {
-                                    post_id: currentPostId || 0,
-                                    trigger: previewQueryKey
-                                }
-                            } ),
-                            showCaption ? el( RichText, {
-                                tagName: 'figcaption',
-                                className: 'wp-block-table__caption',
-                                value: captionValue,
-                                placeholder: wpc.getDefaultTableCaption(),
-                                onChange: function( value ) {
-                                    setAttributes( { caption: value } );
-                                }
-                            } ) : null
+                    el( 'div', { key: 'preview', className: 'wpc-block-surface-wrap' },
+                        wpc.renderEditorBlockLabel( el, blockTitle ),
+                        el( 'div', { className: 'wpc-change-log-preview' },
+                            attributes.visibleOnPage === false && el( 'span', {
+                                style: { display: 'block', fontSize: '11px', color: '#996800', marginBottom: '8px' }
+                            }, __( 'Hidden on the public site — editor preview only.', 'wp-changelog' ) ),
+                            el( 'figure', { className: previewFigureClass },
+                                el( wp.serverSideRender, {
+                                    key: 'wpc-ssr-' + previewQueryKey,
+                                    block: blockName,
+                                    attributes: previewAttributes,
+                                    httpMethod: 'POST',
+                                    urlQueryArgs: {
+                                        post_id: currentPostId || 0,
+                                        trigger: previewQueryKey
+                                    }
+                                } ),
+                                showCaption ? el( RichText, {
+                                    tagName: 'figcaption',
+                                    className: 'wp-block-table__caption',
+                                    value: captionValue,
+                                    placeholder: wpc.getDefaultTableCaption(),
+                                    onChange: function( value ) {
+                                        setAttributes( { caption: value } );
+                                    }
+                                } ) : null
+                            )
                         )
                     )
                 ];

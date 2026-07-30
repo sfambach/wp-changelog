@@ -138,8 +138,8 @@
                     ),
                     el( 'div', { key: 'editor', className: 'wpc-block-surface-wrap' },
                         wpc.renderEditorBlockLabel( el, blockTitle ),
-                        el( 'div', { className: 'wpc-multi-note-wrap' },
-                            el( 'table', { className: 'wpc-multi-note-table' },
+                        el( 'div', { className: 'wpc-note-table-wrap' },
+                            el( 'table', { className: 'wpc-editor-note-table' },
                                 el( 'thead', null,
                                     el( 'tr', null,
                                         el( 'th', { className: 'wpc-changelog-col-date' }, __( 'Date', 'wp-changelog' ) ),
@@ -155,8 +155,7 @@
                                                 el( TextControl, {
                                                     value: row.date,
                                                     onChange: function( value ) { updateRow( row.id, { date: value } ); },
-                                                    placeholder: __( 'Date', 'wp-changelog' ),
-                                                    style: { height: '28px', fontSize: '12px' }
+                                                    placeholder: __( 'Date', 'wp-changelog' )
                                                 } )
                                             ),
                                             el( 'td', { className: 'wpc-minimal-input wpc-changelog-col-change' },
@@ -169,15 +168,13 @@
                                                             author: row.author || authorName
                                                         } );
                                                     },
-                                                    placeholder: __( 'What was changed? (e.g. Fixed typo...)', 'wp-changelog' ),
-                                                    style: { height: '28px', fontSize: '12px' }
+                                                    placeholder: __( 'What was changed? (e.g. Fixed typo...)', 'wp-changelog' )
                                                 } )
                                             ),
-                                            el( 'td', { className: 'wpc-minimal-input wpc-changelog-col-author', style: { opacity: '0.6' } },
+                                            el( 'td', { className: 'wpc-minimal-input wpc-changelog-col-author' },
                                                 el( TextControl, {
                                                     value: row.author || authorName || __( 'Loading...', 'wp-changelog' ),
-                                                    disabled: true,
-                                                    style: { height: '28px', fontSize: '12px' }
+                                                    disabled: true
                                                 } )
                                             ),
                                             el( 'td', { className: 'wpc-changelog-col-actions' },

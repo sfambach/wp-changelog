@@ -1,6 +1,6 @@
 # Plan / Feature-Stand (wp-changelog)
 
-Quelle der Wahrheit: GitHub [sfambach/wp-changelog](https://github.com/sfambach/wp-changelog) (v1.6.x).
+Quelle der Wahrheit: GitHub [sfambach/wp-changelog](https://github.com/sfambach/wp-changelog) (v2.0.0).
 
 ## Blöcke
 
@@ -21,3 +21,13 @@ Quelle der Wahrheit: GitHub [sfambach/wp-changelog](https://github.com/sfambach/
 ## Session-Notizen (2026-07-26)
 
 Wiederhergestellt von v1.6.0-Basis; danach UI-Fixes: Junction-URL, DE-Namen, Caption, Spaltenbreiten, Sync-Button.
+
+## Architektur (2026-07-29 / v2.0.0)
+
+PHP ist OOP unter Namespace `WPChangelog` (`src/`), Views in `templates/`. Keine globalen `wpc_*`-Funktionen mehr.
+
+## Session-Notizen (2026-07-30)
+
+- Theme-Tokens für Tabellenhintergrund/Stripes (`color-mix`)
+- Einzel-Log: kompakte Idle-Ansicht, Enter → Absatz, `#log`-Shortcut
+- Absätze zwischen Log-Zeilen im Editor besser sichtbar

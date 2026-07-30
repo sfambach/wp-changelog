@@ -13,6 +13,9 @@
 
     /**
      * Live preview of the globally appended Change Log table.
+     *
+     * Markup mirrors the Logausgabe block: label above, preview surface with
+     * the same server-rendered figure/table HTML as the frontend output.
      */
     function GlobalChangeLogPreview() {
         var editorState = useSelect( function( select ) {
@@ -125,27 +128,34 @@
         return el(
             'div',
             {
-                className: 'wpc-change-log-preview wpc-global-change-log-preview wpc-block-surface-wrap',
+                className: 'wp-block wpc-block-surface-wrap wpc-global-change-log-root',
                 'data-wpc-global-change-log': 'true'
             },
             window.wpcChangelog && window.wpcChangelog.renderEditorBlockLabel
                 ? window.wpcChangelog.renderEditorBlockLabel( el, __( 'Logausgabe', 'wp-changelog' ) + ' (' + __( 'Global', 'wp-changelog' ) + ')' )
                 : null,
-            preview.hiddenOnFrontend && el(
-                'span',
-                {
-                    style: {
-                        display: 'block',
-                        fontSize: '11px',
-                        color: '#996800',
-                        marginBottom: '8px'
-                    }
-                },
-                __( 'Hidden on the public site — editor preview only.', 'wp-changelog' )
-            ),
-            preview.loading
-                ? el( 'p', { style: { margin: 0, fontSize: '12px', color: '#666' } }, __( 'Loading...', 'wp-changelog' ) )
-                : el( 'div', { dangerouslySetInnerHTML: { __html: preview.html } } )
+            el(
+                'div',
+                { className: 'wpc-change-log-preview wpc-global-change-log-preview' },
+                preview.hiddenOnFrontend && el(
+                    'span',
+                    {
+                        style: {
+                            display: 'block',
+                            fontSize: '11px',
+                            color: '#996800',
+                            marginBottom: '8px'
+                        }
+                    },
+                    __( 'Hidden on the public site — editor preview only.', 'wp-changelog' )
+                ),
+                preview.loading
+                    ? el( 'p', { style: { margin: 0, fontSize: '12px', color: '#666' } }, __( 'Loading...', 'wp-changelog' ) )
+                    : el( 'div', {
+                        className: 'wpc-global-change-log-html',
+                        dangerouslySetInnerHTML: { __html: preview.html }
+                    } )
+            )
         );
     }
 

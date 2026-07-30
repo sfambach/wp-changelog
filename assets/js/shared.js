@@ -307,6 +307,50 @@ window.wpcChangelog.renderEditorBlockLabel = function( el, title ) {
 };
 
 /**
+ * Whether a paragraph/rich-text content value is empty.
+ *
+ * WordPress 6.5+ may store empty rich-text as `{}` instead of `''`.
+ *
+ * @param {*} content Paragraph content attribute.
+ * @returns {boolean}
+ */
+window.wpcChangelog.isRichTextEmpty = function( content ) {
+    if ( content == null || content === '' ) {
+        return true;
+    }
+
+    if ( typeof content === 'string' ) {
+        return content.replace( /<[^>]*>/g, '' ).trim() === '';
+    }
+
+    if ( typeof content === 'object' ) {
+        if ( typeof content.text === 'string' ) {
+            return content.text.trim() === '';
+        }
+        if ( typeof content.toHTMLString === 'function' ) {
+            return content.toHTMLString().replace( /<[^>]*>/g, '' ).trim() === '';
+        }
+        return Object.keys( content ).length === 0;
+    }
+
+    return false;
+};
+
+/**
+ * Focus the RichText caret of the currently selected paragraph block.
+ *
+ * @returns {void}
+ */
+window.wpcChangelog.focusSelectedParagraph = function() {
+    var selected = document.querySelector(
+        '.block-editor-block-list__block.is-selected[data-type="core/paragraph"] [contenteditable="true"]'
+    );
+    if ( selected && typeof selected.focus === 'function' ) {
+        selected.focus();
+    }
+};
+
+/**
  * Register a Single Change Note block variant (current or legacy slug).
  *
  * @param {Object} blocks     wp.blocks module.
@@ -325,8 +369,12 @@ window.wpcChangelog.registerNoteBlock = function( blocks, element, components, d
     var wpc = window.wpcChangelog;
     var supports = options.supports || {};
     var blockTitle = options.title || '';
-
-    blocks.registerBlockType( blockName, {
+    var editorSettings = window.wpcChangelogSettings || {};
+    var useBlockProps = ( window.wp.blockEditor && window.wp.blockEditor.useBlockProps ) || function( extra ) {
+        return extra || {};
+    };
+    var blockSettings = {
+        apiVersion: 3,
         title: options.title,
         icon: options.icon || 'edit',
         category: 'common',
@@ -340,7 +388,60 @@ window.wpcChangelog.registerNoteBlock = function( blocks, element, components, d
         edit: function( props ) {
             var attributes = props.attributes;
             var setAttributes = props.setAttributes;
+            var isSelected = props.isSelected;
+            var clientId = props.clientId;
             var currentUser = data.select( 'core' ).getCurrentUser();
+            var changeFieldRef = element.useRef( null );
+            var didFocusChangeRef = element.useRef( false );
+            var blockProps = useBlockProps( {
+                className: isSelected
+                    ? 'wpc-block-surface-wrap wpc-single-note-active'
+                    : 'wpc-block-surface-wrap wpc-single-note-idle'
+            } );
+
+            /**
+             * Enter in the Change field inserts/selects a paragraph after this block.
+             *
+             * @param {KeyboardEvent} event Key event from the Change input.
+             * @returns {void}
+             */
+            function leaveBlockOnEnter( event ) {
+                if ( event.key !== 'Enter' || event.shiftKey || event.altKey || event.ctrlKey || event.metaKey ) {
+                    return;
+                }
+
+                event.preventDefault();
+                event.stopPropagation();
+
+                // Blur the note input so the new paragraph can take writing focus.
+                if ( event.target && typeof event.target.blur === 'function' ) {
+                    event.target.blur();
+                }
+
+                var blockEditorSelect = data.select( 'core/block-editor' );
+                var blockEditorDispatch = data.dispatch( 'core/block-editor' );
+                var nextClientId = blockEditorSelect.getNextBlockClientId( clientId );
+
+                if ( nextClientId ) {
+                    var nextBlock = blockEditorSelect.getBlock( nextClientId );
+                    if (
+                        nextBlock &&
+                        nextBlock.name === 'core/paragraph' &&
+                        wpc.isRichTextEmpty( nextBlock.attributes.content )
+                    ) {
+                        blockEditorDispatch.selectBlock( nextClientId, 0 );
+                        window.setTimeout( function() {
+                            wpc.focusSelectedParagraph();
+                        }, 0 );
+                        return;
+                    }
+                }
+
+                blockEditorDispatch.insertAfterBlock( clientId );
+                window.setTimeout( function() {
+                    wpc.focusSelectedParagraph();
+                }, 0 );
+            }
 
             element.useEffect( function() {
                 var updates = {};
@@ -360,51 +461,130 @@ window.wpcChangelog.registerNoteBlock = function( blocks, element, components, d
                 }
             }, [ currentUser ] );
 
-            return el( 'div', { className: 'wpc-block-surface-wrap' },
-                wpc.renderEditorBlockLabel( el, blockTitle ),
-                el( 'div', {
-                    className: 'wpc-block-surface',
-                    style: {
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        padding: '2px 6px',
-                        marginBottom: '4px',
-                        borderRadius: '2px',
-                        borderLeft: '3px solid #007cba'
+            // After insert/select (e.g. via #log shortcut), focus the Change field.
+            element.useEffect( function() {
+                if ( ! isSelected ) {
+                    didFocusChangeRef.current = false;
+                    return;
+                }
+
+                if ( didFocusChangeRef.current ) {
+                    return;
+                }
+
+                var timer = window.setTimeout( function() {
+                    if ( ! changeFieldRef.current ) {
+                        return;
                     }
-                },
-                    el( 'div', { style: { width: '7rem', flex: '0 0 7rem' }, className: 'wpc-minimal-input wpc-changelog-col-date' },
-                        el( TextControl, {
-                            value: attributes.date,
-                            onChange: function( value ) { setAttributes( { date: value } ); },
-                            placeholder: __( 'Date', 'wp-changelog' ),
-                            style: { height: '28px', fontSize: '12px' }
-                        } )
-                    ),
-                    el( 'div', { style: { flex: '1 1 auto', minWidth: 0 }, className: 'wpc-minimal-input wpc-changelog-col-change' },
-                        el( TextControl, {
-                            value: attributes.comment,
-                            onChange: function( value ) {
-                                setAttributes( {
-                                    comment: value,
-                                    changedAt: Math.floor( Date.now() / 1000 )
-                                } );
-                            },
-                            placeholder: __( 'What was changed? (e.g. Fixed typo...)', 'wp-changelog' ),
-                            style: { height: '28px', fontSize: '12px' }
-                        } )
-                    ),
-                    el( 'div', { style: { width: '9rem', flex: '0 0 9rem', opacity: '0.6' }, className: 'wpc-minimal-input wpc-changelog-col-author' },
-                        el( TextControl, {
-                            value: attributes.author || __( 'Loading...', 'wp-changelog' ),
-                            disabled: true,
-                            style: { height: '28px', fontSize: '12px' }
-                        } )
+
+                    var input = changeFieldRef.current.querySelector( 'input' );
+                    if ( ! input ) {
+                        return;
+                    }
+
+                    input.focus();
+                    var len = input.value ? input.value.length : 0;
+                    if ( typeof input.setSelectionRange === 'function' ) {
+                        input.setSelectionRange( len, len );
+                    }
+                    didFocusChangeRef.current = true;
+                }, 0 );
+
+                return function() {
+                    window.clearTimeout( timer );
+                };
+            }, [ isSelected ] );
+
+            if ( ! isSelected ) {
+                var summaryParts = [];
+                if ( attributes.date ) {
+                    summaryParts.push( attributes.date );
+                }
+                if ( attributes.comment ) {
+                    summaryParts.push( attributes.comment );
+                }
+                if ( attributes.author ) {
+                    summaryParts.push( attributes.author );
+                }
+
+                return el( 'div', blockProps,
+                    el( 'div', { className: 'wpc-single-note-summary' },
+                        '#log: ' + ( summaryParts.length
+                            ? summaryParts.join( ' — ' )
+                            : __( 'Empty change note', 'wp-changelog' ) )
+                    )
+                );
+            }
+
+            return el( 'div', blockProps,
+                wpc.renderEditorBlockLabel( el, blockTitle ),
+                el( 'div', { className: 'wpc-note-table-wrap' },
+                    el( 'table', { className: 'wpc-editor-note-table' },
+                        el( 'tbody', null,
+                            el( 'tr', null,
+                                el( 'td', { className: 'wpc-minimal-input wpc-changelog-col-date' },
+                                    el( TextControl, {
+                                        value: attributes.date,
+                                        onChange: function( value ) { setAttributes( { date: value } ); },
+                                        placeholder: __( 'Date', 'wp-changelog' )
+                                    } )
+                                ),
+                                el( 'td', {
+                                    className: 'wpc-minimal-input wpc-changelog-col-change',
+                                    ref: changeFieldRef,
+                                    onKeyDown: leaveBlockOnEnter
+                                },
+                                    el( TextControl, {
+                                        value: attributes.comment,
+                                        onChange: function( value ) {
+                                            setAttributes( {
+                                                comment: value,
+                                                changedAt: Math.floor( Date.now() / 1000 )
+                                            } );
+                                        },
+                                        placeholder: __( 'What was changed? (e.g. Fixed typo...)', 'wp-changelog' )
+                                    } )
+                                ),
+                                el( 'td', { className: 'wpc-minimal-input wpc-changelog-col-author' },
+                                    el( TextControl, {
+                                        value: attributes.author || __( 'Loading...', 'wp-changelog' ),
+                                        disabled: true
+                                    } )
+                                )
+                            )
+                        )
                     )
                 )
             );
         },
         save: function() { return null; }
-    } );
+    };
+
+    // Only the current block slug gets the typing shortcut (not the legacy slug).
+    if (
+        blockName === 'wpc/single-change-note' &&
+        editorSettings.shortcutEnabled !== false &&
+        typeof blocks.createBlock === 'function'
+    ) {
+        var prefix = ( editorSettings.shortcutPrefix || '#log' ).toString();
+        if ( prefix ) {
+            blockSettings.transforms = {
+                from: [
+                    {
+                        type: 'prefix',
+                        prefix: prefix,
+                        transform: function( content ) {
+                            return blocks.createBlock( blockName, {
+                                comment: content || '',
+                                date: wpc.formatToday(),
+                                changedAt: Math.floor( Date.now() / 1000 )
+                            } );
+                        }
+                    }
+                ]
+            };
+        }
+    }
+
+    blocks.registerBlockType( blockName, blockSettings );
 };

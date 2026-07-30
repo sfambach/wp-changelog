@@ -3,7 +3,7 @@
  * Plugin Name: Gutenberg Changelog & Version History
  * Plugin URI:  https://github.com/sfambach/wp-changelog
  * Description: Adds change notes and lists them in a flexible, interactive table.
- * Version: 1.6.1
+ * Version: 2.0.0
  * Author: Stefan Fambach
  * Author URI: https://www.fambach.net
  * Requires at least: 6.0
@@ -11,26 +11,34 @@
  * Text Domain: wp-changelog
  * Domain Path: /languages
  *
- * @package WP_Changelog
+ * @package WPChangelog
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
-    exit;
+	exit;
 }
-
-require_once __DIR__ . '/includes/helpers.php';
-require_once __DIR__ . '/includes/collectors.php';
-require_once __DIR__ . '/includes/render-change-log.php';
-require_once __DIR__ . '/includes/blocks.php';
-require_once __DIR__ . '/includes/settings.php';
-require_once __DIR__ . '/includes/global-change-log.php';
 
 /**
- * Load plugin translations from the languages directory.
+ * PSR-4 autoloader for the WPChangelog namespace.
  *
+ * @param string $class Fully-qualified class name.
  * @return void
  */
-function wpc_load_textdomain() {
-    load_plugin_textdomain( 'wp-changelog', false, dirname( plugin_basename( __FILE__ ) ) . '/languages' );
-}
-add_action( 'plugins_loaded', 'wpc_load_textdomain' );
+spl_autoload_register(
+	static function ( $class ) {
+		$prefix = 'WPChangelog\\';
+
+		if ( 0 !== strpos( $class, $prefix ) ) {
+			return;
+		}
+
+		$relative = substr( $class, strlen( $prefix ) );
+		$file     = __DIR__ . '/src/' . str_replace( '\\', '/', $relative ) . '.php';
+
+		if ( is_readable( $file ) ) {
+			require_once $file;
+		}
+	}
+);
+
+WPChangelog\Plugin::instance()->init();
