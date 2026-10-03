@@ -10,6 +10,8 @@
  * Requires PHP: 7.4
  * Text Domain: wp-changelog
  * Domain Path: /languages
+ * GitHub Plugin URI: sfambach/wp-changelog
+ * Primary Branch: main
  *
  * @package WPChangelog
  */
