@@ -165,17 +165,13 @@ class Collectors {
 	 * @return array
 	 */
 	public function build_creation_entry( WP_Post $post, array $change_items = [] ) {
-		$earliest = 0;
+		$earliest = Helpers::get_post_earliest_version_timestamp( $post );
 
 		foreach ( $change_items as $item ) {
 			$ts = isset( $item['timestamp'] ) ? (int) $item['timestamp'] : 0;
-			if ( $ts > 0 && ( 0 === $earliest || $ts < $earliest ) ) {
+			if ( $ts > 0 && $ts < $earliest ) {
 				$earliest = $ts;
 			}
-		}
-
-		if ( ! $earliest ) {
-			$earliest = Helpers::get_post_earliest_version_timestamp( $post );
 		}
 
 		$author_obj = get_user_by( 'id', $post->post_author );

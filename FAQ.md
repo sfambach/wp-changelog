@@ -45,7 +45,7 @@ Sidebar → **General Settings** → **Sort Order**, plus unter **Changefield Op
 
 ## „Post created“-Datum
 
-Die Zeile **Post created** / **Beitrag erstellt** nimmt das **früheste Datum aus den Change-Notes** (Einzel-Log-Einträge und Log-Liste). Gibt es noch keine Einträge, wird das Beitragsdatum (`post_date`) als Fallback verwendet.
+Die Zeile **Post created** / **Beitrag erstellt** nimmt das **früheste Datum aus der Seitenhistorie** (Revisionen und `post_date`). Liegt ein Change-Note-Datum noch früher, wird dieses verwendet.
 
 ## Globale Integration
 

@@ -3,7 +3,7 @@
  * Plugin Name: Gutenberg Changelog & Version History
  * Plugin URI:  https://github.com/sfambach/wp-changelog
  * Description: Adds change notes and lists them in a flexible, interactive table.
- * Version: 2.0.0
+ * Version: 2.0.1
  * Author: Stefan Fambach
  * Author URI: https://www.fambach.net
  * Requires at least: 6.0

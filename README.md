@@ -4,7 +4,7 @@ A lightweight WordPress plugin for logging content changes inside the Gutenberg 
 
 **Author:** Stefan Fambach  
 **Website:** [www.fambach.net](https://www.fambach.net) — further information  
-**Version:** 2.0.0  
+**Version:** 2.0.1  
 **Requires:** WordPress 6.0+, PHP 7.4+  
 **Plugin website:** [github.com/sfambach/wp-changelog](https://github.com/sfambach/wp-changelog)
 
@@ -31,7 +31,7 @@ Legacy block slugs (`wpc/change-item`, `wpc/multi-note`, `wpc/change-table`) rem
 
 ### Change Log table
 
-* **Post created row** — uses the earliest date found in the change notes; falls back to `post_date` when no notes exist
+* **Post created row** — uses the earliest date from the page history (revisions, `post_date`); an earlier change note date takes precedence
 * **Table caption** — default **Logbuch** (DE) / **Changelog** (EN), editable like the core table caption
 * **Sort order** — newest or oldest date row on top
 * **Visible on page** — hide the table on the public site while keeping the editor preview
@@ -127,6 +127,10 @@ More details: see [FAQ.md](FAQ.md).
 * Site-wide audit logging beyond page changelogs is out of scope for this plugin.
 
 ## Changelog
+
+### 2.0.1 (2026-10-03)
+
+* Post created row: date now taken from the page history (revisions, `post_date`) instead of the earliest change note; earlier note dates still win.
 
 ### 2.0.0 (2026-07-30)
 
