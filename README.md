@@ -8,6 +8,10 @@ A lightweight WordPress plugin for logging content changes inside the Gutenberg 
 **Requires:** WordPress 6.0+, PHP 7.4+  
 **Plugin website:** [github.com/sfambach/wp-changelog](https://github.com/sfambach/wp-changelog)
 
+## AI disclosure
+
+This plugin was built with AI assistance: the code was written largely by Claude (Anthropic) via Claude Code. Stefan Fambach specified, reviewed and tested it.
+
 ## Description
 
 Managing content updates across multi-author blogs or corporate websites can be tricky. This plugin provides a clear workflow:
