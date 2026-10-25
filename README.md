@@ -2,15 +2,19 @@
 
 A lightweight WordPress plugin for logging content changes inside the Gutenberg editor and rendering a formatted changelog table on the frontend.
 
-**Author:** Stefan Fambach  
 **Website:** [www.fambach.net](https://www.fambach.net) — further information  
 **Version:** 2.0.1  
 **Requires:** WordPress 6.0+, PHP 7.4+  
 **Plugin website:** [github.com/sfambach/wp-changelog](https://github.com/sfambach/wp-changelog)
 
+## Authors
+
+- **Stefan Fambach** (SteFam) – idea and concept, review and testing – https://www.fambach.net
+- **Claude** (Anthropic AI) – implementation, via Claude Code
+
 ## AI disclosure
 
-This plugin was built with AI assistance: the code was written largely by Claude (Anthropic) via Claude Code. Stefan Fambach specified, reviewed and tested it.
+This project is built with AI assistance. Stefan Fambach had the idea, wrote the concept and reviews and tests every change; the implementation (code and documentation) is written largely by Claude (Anthropic) via Claude Code.
 
 ## Description
 
